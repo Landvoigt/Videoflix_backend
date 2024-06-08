@@ -1,12 +1,14 @@
 import traceback
-from rest_framework.authtoken.views import ObtainAuthToken, Token, Response, APIView
-from rest_framework import status
-from django.dispatch import receiver
-from django_rest_passwordreset.signals import reset_password_token_created
-from django.core.mail import send_mail
+
 from django.conf import settings
+from django.dispatch import receiver
+from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from .models import CustomUser
+from django.contrib.auth.models import User
+
+from rest_framework import status
+from rest_framework.authtoken.views import ObtainAuthToken, Token, Response, APIView
+from django_rest_passwordreset.signals import reset_password_token_created
 
 
 class UserLoginView(ObtainAuthToken, APIView):
@@ -15,8 +17,8 @@ class UserLoginView(ObtainAuthToken, APIView):
         password = request.data.get('password')
 
         try:
-            user = CustomUser.objects.get(email=email)
-        except CustomUser.DoesNotExist:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
             return Response({'error': 'Email does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.check_password(password):
@@ -27,27 +29,19 @@ class UserLoginView(ObtainAuthToken, APIView):
             'token': token.key,
             'user_id': user.pk,
             'email': user.email,
-            'name': f'{user.first_name} {user.last_name}',
+            'username': user.username,
         }, status=status.HTTP_200_OK)
     
 
 class UserCreateView(APIView):
     def post(self, request, format=None):
-        first_name = request.data.get('first_name')
-        last_name = request.data.get('last_name')
-        password = request.data.get('password')
+        username = request.data.get('username')
         email = request.data.get('email')
-        username = f"{first_name.lower()}{last_name.lower()}"
+        password = request.data.get('password')
 
         try:
-            if not CustomUser.objects.filter(email=email).exists():
-                user = CustomUser.objects.create_user(
-                    username=username, 
-                    first_name=first_name, 
-                    last_name=last_name, 
-                    password=password, 
-                    email=email
-                )
+            if not User.objects.filter(email=email).exists():
+                user = User.objects.create_user(username=username, email=email, password=password)
                 return Response({'success': 'User created successfully.'}, status=status.HTTP_201_CREATED)
             else:
                 return Response({'error': 'User already exists.'}, status=status.HTTP_409_CONFLICT)
@@ -71,16 +65,16 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     recipient_list = [user.email]
     send_mail(subject, message, from_email, recipient_list, fail_silently=False)
 
-     
+
 class UserResetPasswordView(APIView):
-    def post(self, request):
+     def post(self, request):
         token = request.data.get('token')
         new_password = request.data.get('password')
 
         if not token or not new_password:
             return Response({'error': 'Token and new_password are required.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        user = get_object_or_404(CustomUser, password_reset_token=token)
+        user = get_object_or_404(User, password_reset_token=token)
         user.set_password(new_password)
         user.save()
 
