@@ -3,7 +3,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from django.urls import reverse
 
-class CustomUserTestCase(TestCase):
+class UserApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.login_url = reverse('login')
@@ -11,8 +11,7 @@ class CustomUserTestCase(TestCase):
         self.reset_user_pw_url = reverse('password_reset_confirm', args=['uidb64', 'token'])
 
         self.user_data = {
-            'first_name': 'Firstname',
-            'last_name': 'Lastname',
+            'username': 'username',
             'password': 'securepassword',
             'email': 'firstnamelastname@example.com',
         }
