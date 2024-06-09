@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import environ
+import os
 
 env = environ.Env()
 environ.Env.read_env()
@@ -59,9 +60,11 @@ INSTALLED_APPS = [
 
     # apps
     "users",
+    'videostore.apps.VideostoreConfig',
 
     # other
     "corsheaders",
+    'django_rq',
 ]
 
 MIDDLEWARE = [
@@ -162,3 +165,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # EMAIL_HOST_USER = ''
 # EMAIL_HOST_PASSWORD = ''
 # DEFAULT_FROM_EMAIL = ''
+
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+        'PASSWORD': 'foobared',
+        'DEFAULT_TIMEOUT': 360,
+        
+    },
+    }
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
