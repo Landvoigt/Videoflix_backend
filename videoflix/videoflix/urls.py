@@ -15,13 +15,14 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
 from django.contrib import admin
-from django.urls import path, include
 from django.http import HttpResponse
+from django.urls import path, include
+from django.conf.urls.static import static
 
 from users.views import UserLoginView, UserCreateView, UserResetPasswordView, user_update_username
-from django.conf import settings
-from django.conf.urls.static import static
+
 
 def home_view(request):
     return HttpResponse("Welcome to the home page!")
@@ -32,7 +33,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     path('login/', UserLoginView.as_view(), name='login'),
-    path('registry/', UserCreateView.as_view(), name='registry'),
+    path('register/', UserCreateView.as_view(), name='register'),
 
     path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     path('api/password_reset/confirm/<str:uidb64>/<str:token>/', UserResetPasswordView.as_view(), name='password_reset_confirm'),

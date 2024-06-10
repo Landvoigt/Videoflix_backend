@@ -1,5 +1,6 @@
 import string
 import random
+
 from django.contrib.auth.models import User
 
 def generate_unique_username(base='user'):

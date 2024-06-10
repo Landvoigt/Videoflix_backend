@@ -1,29 +1,43 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
+from django.utils.translation import gettext_lazy as _
 
-from .models import CustomUser
-from .forms import CustomUserCreationForm, CustomUserChangeForm
+from rest_framework.authtoken.models import Token
 
 
-# not in use right now
-@admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
-    add_form = CustomUserCreationForm
-    form = CustomUserChangeForm
-    model = CustomUser
-    list_display = ['username', 'email', 'first_name', 'last_name']
-    search_fields = ['username', 'email', 'first_name', 'last_name']
+class CustomUserAdmin(DefaultUserAdmin):   # Update for default Django User Model in admin panel
+    def token(self, obj):
+        try:
+            token = Token.objects.get(user=obj)
+            return token.key
+        except Token.DoesNotExist:
+            return 'No Token'
+    token.short_description = 'Token'
+
     fieldsets = (
-        ('Personal Data', {'fields': ('username', 'email', 'password')}),
+        (_("Login Data"), {"fields": ("email", "password")}),
         ('', {'fields': ()}),
-        (None, {'fields': ('first_name', 'last_name')}),
-        ('Additional Data', {'fields': ('address', 'phone', 'custom')}),
-        ('Dates', {'fields': ('last_login', 'date_joined')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        (None, {'fields': ('username', 'token')}),
+        (_("Personal Data"), {"fields": ("first_name", "last_name")}),
+        (_("Dates"), {"fields": ("last_login", "date_joined")}),
+        (
+            _("Permissions"),
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                )
+            },
+        ),
     )
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('username', 'email', 'first_name', 'last_name', 'password1', 'password2'),
-        }),
-    )
+    readonly_fields = ('token',)
+    list_display = ("email", "username", "last_login", "date_joined", "is_superuser")
+    search_fields = ("email", "username", "first_name", "last_name")
+
+
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)
