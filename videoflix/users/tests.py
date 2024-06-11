@@ -1,6 +1,10 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
+from django.core import mail
 from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
 
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -188,3 +192,48 @@ class UserUpdateUsernameTest(TestCase):
         }
         response = self.client.post(self.url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class UserPasswordResetTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', email='test@example.com', password='password123')
+
+    def test_password_reset_token_created_and_email_sent(self):
+        self.client.post(reverse('password_reset:reset-password-request'), {'email': self.user.email})
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('Password Reset', mail.outbox[0].subject)
+
+        email_body = mail.outbox[0].body
+        self.assertIn(self.user.username, email_body)
+
+        token_line = [line for line in email_body.splitlines() if 'token' in line]
+        self.assertTrue(token_line)
+        
+        token = token_line[0].split('token=')[1]
+        self.assertTrue(token)
+
+    def test_password_reset_with_token(self):
+        token = default_token_generator.make_token(self.user)
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+
+        reset_confirm_url = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+        response = self.client.post(reset_confirm_url, {
+            'password': 'newpassword123'
+        }, content_type='application/json')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['message'], 'Password reset successfully.')
+
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('newpassword123'))
+
+    def test_password_reset_with_invalid_token(self):
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        reset_confirm_url = reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': 'invalid-token'})
+        response = self.client.post(reset_confirm_url, {
+            'password': 'newpassword123'
+        }, content_type='application/json')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.data)

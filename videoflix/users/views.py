@@ -2,11 +2,13 @@ import traceback
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.http import HttpResponseNotFound
 from django.dispatch import receiver
 from django.core.mail import send_mail
-from django.http import HttpResponseNotFound
 from django.shortcuts import get_object_or_404, render
 from django.template.loader import render_to_string
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
 
 from django_rest_passwordreset.signals import reset_password_token_created
 from rest_framework import status
@@ -90,11 +92,6 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
         return
     user = reset_password_token.user
     subject = 'Password Reset'
-    # message = (
-    #     f'Hello {user.username},\n\n'
-    #     'You have requested to reset your password. Please click the following link to reset it:\n'
-    #     f'https://joinnew.timvoigt.ch/html/resetPassword.html?token={reset_password_token.key}'
-    # )
     token = reset_password_token.key
     message = render_to_string('reset_password_email.html', {
         'user': user,
@@ -106,15 +103,33 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
 
 
 class UserResetPasswordView(APIView):
-    def post(self, request):
-        token = request.data.get('token')
-        new_password = request.data.get('password')
+    # old but was working
+    # def post(self, request):
+    #     token = request.data.get('token')
+    #     new_password = request.data.get('password')
 
-        if not token or not new_password:
-            return Response({'error': 'Token and new_password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+    #     if not token or not new_password:
+    #         return Response({'error': 'Token and new_password are required.'}, status=status.HTTP_400_BAD_REQUEST)
         
-        user = get_object_or_404(User, password_reset_token=token)
-        user.set_password(new_password)
-        user.save()
+    #     user = get_object_or_404(User, password_reset_token=token)
+    #     user.set_password(new_password)
+    #     user.save()
 
-        return Response({'message': 'Password reset successfully.'})
+    #     return Response({'message': 'Password reset successfully.'})
+    def post(self, request, uidb64, token):
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and default_token_generator.check_token(user, token):
+            new_password = request.data.get('password')
+            if not new_password:
+                return Response({'error': 'Password is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            user.set_password(new_password)
+            user.save()
+            return Response({'message': 'Password reset successfully.'})
+        else:
+            return Response({'error': 'Invalid token or user ID.'}, status=status.HTTP_400_BAD_REQUEST)
