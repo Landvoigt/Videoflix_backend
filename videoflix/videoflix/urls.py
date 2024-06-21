@@ -21,7 +21,7 @@ from django.http import HttpResponse
 from django.urls import path, include
 from django.conf.urls.static import static
 
-from users.views import UserLoginView, UserCreateView, UserResetPasswordView, user_update_username
+from users.views import UserLoginView, UserCreateView, UserResetPasswordView, ValidateResetTokenView, user_update_username
 
 
 def home_view(request):
@@ -36,6 +36,7 @@ urlpatterns = [
     path('register/', UserCreateView.as_view(), name='register'),
 
     path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
+    path('api/password_reset/validate/', ValidateResetTokenView.as_view(), name='password_reset_validate'),
     path('api/password_reset/confirm/<str:uidb64>/<str:token>/', UserResetPasswordView.as_view(), name='password_reset_confirm'),
     
     path('api/update_username/', user_update_username, name='update_username'),
