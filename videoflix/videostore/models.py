@@ -14,6 +14,9 @@ class Video(models.Model):
             video_name = os.path.splitext(os.path.basename(self.video_file.name))[0]
             gcs_url = f'https://storage.googleapis.com/videoflix-videos/hls/{video_name}/master.m3u8'
             self.hls_playlist = gcs_url
+            
+        if self.video_file:
+            self.video_file.name = os.path.basename(self.video_file.name)
         
         super().save(*args, **kwargs) 
     
