@@ -15,9 +15,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.views import ObtainAuthToken, Token, Response, APIView
 from rest_framework.decorators import api_view, permission_classes
 from django_rest_passwordreset.models import ResetPasswordToken
-from django_rest_passwordreset.tokens import get_token_generator
+
 
 from .utils import generate_unique_username
+from verification_token.models import EmailVerificationToken
+from verification_token.utils import send_verification_email
 
 
 class UserCreateView(APIView):
@@ -31,7 +33,10 @@ class UserCreateView(APIView):
         try:
             if not User.objects.filter(email=email).exists():
                 username = generate_unique_username()
-                user = User.objects.create_user(username=username, email=email, password=password)
+                user = User.objects.create_user(username=username, email=email, password=password, is_active=False)
+
+                send_verification_email(user)
+
                 return Response({'success': 'User created successfully', 'username': username}, status=status.HTTP_201_CREATED)
             else:
                 return Response({'error': 'User already exists'}, status=status.HTTP_409_CONFLICT)
@@ -61,6 +66,9 @@ class UserLoginView(ObtainAuthToken, APIView):
 
         if not user.check_password(password):
             return Response({'error': 'Invalid password'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        if not user.is_active:
+            return Response({'error': 'Not verified'}, status=status.HTTP_403_FORBIDDEN)
 
         token, created = Token.objects.get_or_create(user=user)
         return Response({

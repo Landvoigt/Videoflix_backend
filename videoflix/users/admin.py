@@ -35,7 +35,7 @@ class CustomUserAdmin(DefaultUserAdmin):   # Update for default Django User Mode
         ),
     )
     readonly_fields = ('token',)
-    list_display = ("email", "username", "last_login", "date_joined", "is_superuser")
+    list_display = ("email", "username", "last_login", "date_joined", "is_active", "is_superuser")
     search_fields = ("email", "username", "first_name", "last_name")
 
 

@@ -29,6 +29,9 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+FRONTEND_URL = "http://localhost:4200"
+BACKEND_URL = "http://localhost:8000"
+
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
@@ -52,7 +55,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'django_rq',
+    'django.contrib.sites',
+    "django_rq",
 
     # rest-framework
     "rest_framework",
@@ -61,8 +65,10 @@ INSTALLED_APPS = [
 
     # apps
     "users",
-    'videostore.apps.VideostoreConfig',
-
+    'verification_token.apps.EmailVerificationConfig',
+    "profiles",
+    "videostore.apps.VideostoreConfig",
+    
     # other
     "corsheaders",
 ]
@@ -83,7 +89,7 @@ ROOT_URLCONF = "videoflix.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, 'templates')],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -131,8 +137,12 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
@@ -161,7 +171,7 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'  # Email Backend for testing
 EMAIL_HOST = env("EMAIL_HOST")
 EMAIL_PORT = env("EMAIL_PORT")
@@ -171,34 +181,35 @@ EMAIL_USE_TLS = True
 
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
         },
     },
-    'loggers': {
-        'django.core.mail': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': True,
+    "loggers": {
+        "django.core.mail": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
         },
     },
 }
 
 
 RQ_QUEUES = {
-    'default': {
-        'HOST': 'localhost',
-        'PORT': 6379,
-        'DB': 0,
-        'PASSWORD': 'foobared',
-        'DEFAULT_TIMEOUT': 360,
-        
+    "default": {
+        "HOST": "localhost",
+        "PORT": 6379,
+        "DB": 0,
+        "PASSWORD": "foobared",
+        "DEFAULT_TIMEOUT": 360,
     },
 }
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
+
+SITE_ID = 1
