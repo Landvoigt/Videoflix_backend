@@ -3,7 +3,7 @@ SET PGPASSWORD=videoflix12345
 REM Set the database connection details
 SET DB_NAME=videoflix_backend
 SET DB_USER=videoflix_admin
-SET DB_HOST=localhost
+SET DB_HOST=192.168.2.138
 SET DB_PORT=5432
 
 REM Dump the current database to a file

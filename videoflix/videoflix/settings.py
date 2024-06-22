@@ -233,6 +233,8 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
 #     echo #!/bin/sh > post-merge
 #     echo # This script runs the database backup and restore script >> post-merge
 #     echo ./db_backup_and_restore.bat >> post-merge
+#     echo echo "Post-merge hook completed" >> post-merge
+
 #     type post-merge
 
     
