@@ -144,7 +144,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
+        # "rest_framework.permissions.IsAuthenticated",
     ],
 }
 
@@ -228,4 +228,11 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
 # DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
 # CONVERTED_VIDEOS_PATH = 'videos/'
 
+# pg_dump:
+#     cd .git\hooks
+#     echo #!/bin/sh > post-merge
+#     echo # This script runs the database backup and restore script >> post-merge
+#     echo ./db_backup_and_restore.bat >> post-merge
+#     type post-merge
 
+    
