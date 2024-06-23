@@ -1,4 +1,3 @@
-
 import os
 import logging
 from .models import Video
@@ -8,10 +7,13 @@ import django_rq
 from django.conf import settings
 from google.cloud import storage
 import shutil
+from django.dispatch import Signal
 
 logger = logging.getLogger(__name__)
 
 
+
+video_post_save = Signal()
 
 @receiver(post_save, sender=Video)
 def video_post_save(sender, instance, created, **kwargs):
@@ -28,8 +30,7 @@ def video_post_save(sender, instance, created, **kwargs):
         logger.debug(f"Video enqueued for HLS conversion: ID {instance.id}, Name {video_name}")
         
 
-
-                
+         
 @receiver(post_delete, sender=Video)
 def delete_django_admin_video(sender, instance, **kwargs):
     if instance.video_file:
@@ -59,7 +60,6 @@ def delete_gcs_video(sender, instance, **kwargs):
     try:
         logger.info(f"Connecting to Google Cloud Storage with credentials: {settings.GS_CREDENTIALS}")
         client = storage.Client(credentials=settings.GS_CREDENTIALS)
-        # bucket = client.bucket('videoflix-videos') 
         bucket = client.bucket(settings.GS_BUCKET_NAME)
         
         _, filename = os.path.split(instance.video_file.name)
