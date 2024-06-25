@@ -72,7 +72,7 @@ INSTALLED_APPS = [
     
     # other
     "corsheaders",
-    'storages'
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -180,35 +180,6 @@ EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = True
-
-
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'debug.log'), 
-        },
-        "console": {
-            "level": "DEBUG",
-            "class": "logging.StreamHandler",
-        },
-    },
-    "loggers": {
-        "django.core.mail": {
-        "": {  
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": True,
-        },
-        }
-    },
-}
-
-
-
 
 
 RQ_QUEUES = {

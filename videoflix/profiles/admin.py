@@ -3,15 +3,15 @@ from .models import Profile
 
 
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'user', 'avatar_id', 'creation_date')
-    list_filter = ('id', 'user', 'name', 'creation_date')
+    list_display = ('id', 'name', 'user', 'avatar_id', 'created_at')
+    list_filter = ('id', 'user', 'name', 'created_at')
     list_display_links = ('name',)
     search_fields = ('name', 'user__username')
-    ordering = ('-creation_date',)
-    readonly_fields = ('id', 'creation_date',)
+    ordering = ('-created_at',)
+    readonly_fields = ('id', 'created_at',)
     fieldsets = (
         (None, {
-            'fields': ('id', 'name', 'description', 'avatar_id', 'user', 'creation_date')
+            'fields': ('id', 'name', 'description', 'avatar_id', 'user', 'created_at')
         }),
     )
 

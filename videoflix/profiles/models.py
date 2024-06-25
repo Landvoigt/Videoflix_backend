@@ -9,7 +9,7 @@ class Profile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="profiles", default=None, blank=True, null=True)
     name = models.CharField(max_length=40)
     description = models.CharField(max_length=700, blank=True, null=True)
-    creation_date = models.DateField(default=datetime.date.today)
+    created_at = models.DateTimeField(auto_now_add=True)
     avatar_id = models.SmallIntegerField()
 
     def clean(self):
