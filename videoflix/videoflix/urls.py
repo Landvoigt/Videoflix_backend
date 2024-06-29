@@ -21,6 +21,8 @@ from django.http import HttpResponse
 from django.urls import path, include
 from django.conf.urls.static import static
 
+from rest_framework.routers import DefaultRouter
+
 from users.views import UserLoginView, UserCreateView, UserResetPasswordView, ValidateResetTokenView, user_update_username
 from profiles.views import ProfileViewSet
 from verification_token.views import UserVerifyEmailView
@@ -30,6 +32,9 @@ from videostore.views import get_video_url
 
 def home_view(request):
     return HttpResponse("Welcome to the home page!")
+
+router = DefaultRouter()
+router.register(r'profiles', ProfileViewSet, basename='profile')
 
 urlpatterns = [
 
@@ -47,8 +52,10 @@ urlpatterns = [
     
     path('api/update_username/', user_update_username, name='update_username'),
 
-    path('profiles/', ProfileViewSet.as_view(), name='profiles'),
-    path('profiles/<int:pk>/', ProfileViewSet.as_view(), name='profile_detail'),
+    # path('profiles/', ProfileViewSet.as_view(), name='profiles'),
+    # path('profiles/<int:pk>/', ProfileViewSet.as_view(), name='profile_detail'),
+
+    path('', include(router.urls)), 
 
     path('django-rq/', include('django_rq.urls')),
     
