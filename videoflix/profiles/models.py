@@ -15,10 +15,6 @@ class Profile(models.Model):
     view_list = ArrayField(models.IntegerField(), blank=True, default=list)
     liked_list = ArrayField(models.IntegerField(), blank=True, default=list)
 
-    def clean(self):
-        if self.user and self.user.profiles.count() >= 3:
-            raise ValidationError("A user can have a maximum of 3 profiles.")
-
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
