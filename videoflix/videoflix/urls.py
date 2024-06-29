@@ -25,6 +25,8 @@ from users.views import UserLoginView, UserCreateView, UserResetPasswordView, Va
 from profiles.views import ProfileViewSet
 from verification_token.views import UserVerifyEmailView
 
+from videostore.views import get_video_url
+
 
 def home_view(request):
     return HttpResponse("Welcome to the home page!")
@@ -49,5 +51,6 @@ urlpatterns = [
     path('profiles/<int:pk>/', ProfileViewSet.as_view(), name='profile_detail'),
 
     path('django-rq/', include('django_rq.urls')),
-
+    
+     path('get-video-url/', get_video_url, name='get_video_url'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

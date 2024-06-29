@@ -167,4 +167,127 @@ class GCSDeleteTestCase(TestCase):
 
         delete_gcs_video(sender=Video, instance=video)
         mock_client_instance.bucket.assert_called_once_with(settings.GS_BUCKET_NAME)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+# from django.test import TestCase, Client
+# from unittest.mock import patch, MagicMock
+# from django.conf import settings
+# from google.cloud import storage
+# import json
 
+# class VideoUrlTestCase(TestCase):
+
+#     @patch('google.cloud.storage.Client')
+#     @patch('redis.StrictRedis')
+#     def test_get_video_url(self, MockRedis, MockStorageClient):
+#         # Mock Redis client
+#         mock_redis_instance = MockRedis.return_value
+#         mock_redis_instance.get.return_value = None  # Simulate Redis cache miss
+#         mock_redis_instance.setex.return_value = True  # Simulate successful cache set
+
+#         # Mock Storage client
+#         mock_blob = MagicMock()
+#         mock_blob.public_url = 'http://example.com/video.mp4'
+#         mock_bucket = MagicMock()
+#         mock_bucket.blob.return_value = mock_blob
+#         mock_storage_client_instance = MockStorageClient.from_service_account_json.return_value
+#         mock_storage_client_instance.bucket.return_value = mock_bucket
+
+#         # Setup test client
+#         client = Client()
+
+#         # Mock request with video_key parameter
+#         video_key = '12345'
+#         response = client.get(f'/get-video-url/?video_key={video_key}')
+
+#         # Assert HTTP response status code
+#         self.assertEqual(response.status_code, 200)
+
+#         # Assert response JSON content
+#         content = json.loads(response.content)
+#         self.assertIn('video_url', content)
+#         self.assertEqual(content['video_url'], 'http://example.com/video.mp4')
+
+#         # Assert Redis client methods called
+#         mock_redis_instance.get.assert_called_once_with(video_key)
+#         mock_redis_instance.setex.assert_called_once_with(video_key, 3600, 'http://example.com/video.mp4')
+
+#         # Assert Storage client methods called
+#         mock_storage_client_instance.bucket.assert_called_once_with(settings.GS_BUCKET_NAME)
+#         mock_bucket.blob.assert_called_once_with(f'hls/{video_key}/master.m3u8')
+    
+# def test_get_video_url_missing_video_key(self):
+#     # Setup test client
+#     client = Client()
+
+#     # Mock request without video_key parameter
+#     response = client.get('/get-video-url/')
+
+#     # Assert HTTP response status code
+#     self.assertEqual(response.status_code, 400)
+
+#     # Assert error message in response JSON content
+#     content = json.loads(response.content)
+#     self.assertIn('error', content)
+#     self.assertEqual(content['error'], 'Video key is required')    
+# @patch('google.cloud.storage.Client')
+# @patch('redis.StrictRedis')
+
+
+# def test_get_video_url_redis_exception(self, MockRedis, MockStorageClient):
+#     # Mock Redis client exception
+#     mock_redis_instance = MockRedis.return_value
+#     mock_redis_instance.get.side_effect = Exception('Mock Redis error')
+
+#     # Setup test client
+#     client = Client()
+
+#     # Mock request with video_key parameter
+#     video_key = '12345'
+#     response = client.get(f'/get-video-url/?video_key={video_key}')
+
+#     # Assert HTTP response status code
+#     self.assertEqual(response.status_code, 500)
+
+#     # Assert error message in response JSON content
+#     content = json.loads(response.content)
+#     self.assertIn('error', content)
+#     self.assertEqual(content['error'], 'Mock Redis error')
+
+# @patch('google.cloud.storage.Client')
+# @patch('redis.StrictRedis')
+# def test_get_video_url_storage_exception(self, MockRedis, MockStorageClient):
+#     # Mock Redis client
+#     mock_redis_instance = MockRedis.return_value
+#     mock_redis_instance.get.return_value = None  # Simulate Redis cache miss
+#     mock_redis_instance.setex.return_value = True  # Simulate successful cache set
+
+#     # Mock Storage client exception
+#     mock_storage_client_instance = MockStorageClient.from_service_account_json.return_value
+#     mock_bucket = MagicMock()
+#     mock_storage_client_instance.bucket.return_value = mock_bucket
+#     mock_bucket.blob.side_effect = Exception('Mock storage error')
+
+#     # Setup test client
+#     client = Client()
+
+#     # Mock request with video_key parameter
+#     video_key = '12345'
+#     response = client.get(f'/get-video-url/?video_key={video_key}')
+
+#     # Assert HTTP response status code
+#     self.assertEqual(response.status_code, 500)
+
+#     # Assert error message in response JSON content
+#     content = json.loads(response.content)
+#     self.assertIn('error', content)
+#     self.assertEqual(content['error'], 'Mock storage error')

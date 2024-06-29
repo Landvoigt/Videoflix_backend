@@ -7,13 +7,13 @@ import django_rq
 from django.conf import settings
 from google.cloud import storage
 import shutil
-from django.dispatch import Signal
+# from django.dispatch import Signal
 
 logger = logging.getLogger(__name__)
 
 
 
-video_post_save = Signal()
+# video_post_save = Signal()
 
 @receiver(post_save, sender=Video)
 def video_post_save(sender, instance, created, **kwargs):

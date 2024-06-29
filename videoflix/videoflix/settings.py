@@ -14,6 +14,7 @@ from pathlib import Path
 import environ
 import os
 from google.oauth2 import service_account
+from django_redis.cache import RedisCache
 
 env = environ.Env()
 environ.Env.read_env()
@@ -216,10 +217,31 @@ RQ_QUEUES = {
         "HOST": "localhost",
         "PORT": 6379,
         "DB": 0,
-        "PASSWORD": "foobared",
+        # "PASSWORD": "foobared",
         "DEFAULT_TIMEOUT": 360,
     },
 }
+
+# rq worker --url redis://:foobared@localhost:6379/0            # zum Straten
+# tasklist | findstr rq                                         # beenden
+# taskkill /PID <Prozess-ID> /F                                 # Prozess beenden
+
+
+# settings.py
+
+# Redis Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://localhost:6379/1',  # Adjust the port and DB number as needed
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            # 'PASSWORD': 'foobared',  # Uncomment if Redis requires authentication
+        }
+    }
+}
+
+
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
