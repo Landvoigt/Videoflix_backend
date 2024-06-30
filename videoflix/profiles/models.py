@@ -2,7 +2,6 @@ import datetime
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.forms import ValidationError
 from django.contrib.postgres.fields import ArrayField
 
 class Profile(models.Model):
@@ -11,6 +10,7 @@ class Profile(models.Model):
     description = models.CharField(max_length=700, blank=True, null=True)
     created_at = models.DateTimeField(default=datetime.date.today)
     avatar_id = models.SmallIntegerField()
+    active = models.BooleanField(default=False)
     language = models.CharField(max_length=40, blank=True, null=True)
     view_list = ArrayField(models.IntegerField(), blank=True, default=list)
     liked_list = ArrayField(models.IntegerField(), blank=True, default=list)
