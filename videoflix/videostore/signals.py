@@ -74,6 +74,14 @@ def delete_gcs_video(sender, instance, **kwargs):
             logger.info(f"Deleted {blob.name} from Google Cloud Storage")
         
         logger.info(f"Deleted all files in folder {folder_path} from Google Cloud Storage")
+        
+        poster_path = f"video-posters/{base_path}.jpg"
+        poster_blob = bucket.blob(poster_path)
+        if poster_blob.exists():
+            poster_blob.delete()
+            logger.info(f"Deleted poster {poster_path} from Google Cloud Storage")
+        else:
+            logger.info(f"Poster {poster_path} not found in Google Cloud Storage")
 
     except Exception as e:
         logger.error(f"Error deleting HLS files from Google Cloud Storage: {e}")

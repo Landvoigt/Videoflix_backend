@@ -45,6 +45,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
 ]
 
+
+
+
 CORS_ALLOW_CREDENTIALS = True
 
 # Application definition
@@ -196,6 +199,8 @@ RQ_QUEUES = {
 # rq worker --url redis://:foobared@localhost:6379/0            # zum Straten
 # tasklist | findstr rq                                         # beenden
 # taskkill /PID <Prozess-ID> /F                                 # Prozess beenden
+# taskkill /PID 6128 /F                                         # Beispiel
+
 
 
 # settings.py

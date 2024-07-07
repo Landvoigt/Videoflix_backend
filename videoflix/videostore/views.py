@@ -3,30 +3,12 @@ from django.http import JsonResponse
 from django.core.cache import cache
 import redis
 from django.views.decorators.http import require_http_methods
+from google.cloud import storage
 
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=1)
 
-# @require_http_methods(["GET"])
-# def get_video_url(request):
-#     video_key = request.GET.get('video_key')
 
-#     if not video_key:
-#         return JsonResponse({'error': 'Video key is required'}, status=400)
-
-#     cached_video_url = redis_client.get(video_key)
-#     if cached_video_url:
-#         print('Video URL from cache:', cached_video_url.decode('utf-8'))
-#         return JsonResponse({'video_url': cached_video_url.decode('utf-8')})
-
-#     video_url = f'https://storage.googleapis.com/videoflix-videos/hls/{video_key}/master.m3u8'
-
-#     print('Generated video URL:', video_url)
-
-#     redis_client.setex(video_key, 3600, video_url)
-    
-
-#     return JsonResponse({'video_url': video_url})
 
 @require_http_methods(["GET"])
 def get_video_url(request):
@@ -48,3 +30,39 @@ def get_video_url(request):
     redis_client.setex(cache_key, 3600, video_url)
 
     return JsonResponse({'video_url': video_url})
+
+
+
+@require_http_methods(["GET"])
+def get_poster_urls(request):
+    try:
+        client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
+        bucket = client.bucket(settings.GS_BUCKET_NAME)
+        prefix = 'video-posters/'
+        blobs = list(bucket.list_blobs(prefix=prefix))
+        poster_urls = [f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/{blob.name}' for blob in blobs]
+
+        return JsonResponse({'poster_urls': poster_urls})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+    
+
+@require_http_methods(["GET"])
+def get_all_video_urls(request):
+    try:
+        client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
+        bucket = client.bucket(settings.GS_BUCKET_NAME)
+        prefix = 'hls/'
+        blobs = bucket.list_blobs(prefix=prefix)
+        video_urls = [f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/{blob.name}' 
+                      for blob in blobs if blob.name.endswith('360p.m3u8')]
+
+        return JsonResponse({'video_urls': video_urls})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+ 
+ 
+ 
+    
+    

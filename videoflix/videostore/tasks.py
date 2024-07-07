@@ -10,21 +10,16 @@ import time
 logger = logging.getLogger(__name__)
 
 
-
-def upload_to_gcs(local_file_path, gcs_file_path):
-    if not os.path.exists(local_file_path):
-        logger.warning(f"File not found: {local_file_path}. Skipping upload to GCS.")
-        return
-
+def upload_to_gcs(local_file_name, gcs_file_path):
     try:
         client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
         bucket = client.bucket(settings.GS_BUCKET_NAME)
-        blob = bucket.blob(gcs_file_path)
-        blob.upload_from_filename(local_file_path)
-        logger.info(f"Uploaded {local_file_path} to {gcs_file_path}")
+        blob = bucket.blob(gcs_file_path)       
+        blob.upload_from_filename(local_file_name)           
+        logger.info(f"Uploaded {local_file_name} to {gcs_file_path}")
     except Exception as e:
-        logger.error(f"Error uploading {local_file_path} to GCS: {e}")
-
+        error_msg = f"Error uploading {local_file_name} to GCS: {e}"
+        logger.error(error_msg)
 
 
 def create_master_playlist(base_path, resolutions):
@@ -71,7 +66,6 @@ def convert_to_hls(video_id, video_name=None):
         return
 
     source = video.video_file.path
-
     if video_name is None:
         video_name = str(video_id) 
 
@@ -80,6 +74,11 @@ def convert_to_hls(video_id, video_name=None):
 
     if not os.path.exists(base_path):
         os.makedirs(base_path)
+    poster_url = extract_and_upload_poster(source, video_name)
+    if poster_url:
+        logger.info(f"Poster extracted and uploaded to {poster_url}")
+    else:
+        logger.error("Failed to extract and upload poster")
 
     cmd = [
         'ffmpeg',
@@ -131,6 +130,7 @@ def convert_to_hls(video_id, video_name=None):
                 if os.path.exists(ts_file):
                     gcs_ts_path = f"hls/{video_name}/{os.path.basename(ts_file)}"
                     upload_to_gcs(ts_file, gcs_ts_path)
+                   
                 else:
                     logger.error(f"TS file {ts_file} does not exist for resolution {resolution} and video id {video_id}")
         else:
@@ -138,9 +138,33 @@ def convert_to_hls(video_id, video_name=None):
 
     logger.info("Finished convert_to_hls function")
     
-    
-    
-    
+   
 
+def extract_and_upload_poster(video_path, video_name):
+    try:
+        base_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, 'videos'))
+        posters_dir = os.path.join(base_path, 'posters')
+        os.makedirs(posters_dir, exist_ok=True)
+        local_file_name = os.path.abspath(os.path.join(posters_dir, f'{video_name}.jpg'))
 
+        cmd = [
+            'ffmpeg',
+            '-i', video_path,
+            '-ss', '00:00:10.000',
+            '-vframes', '1',
+            '-update', '1', 
+            local_file_name 
+        ]
 
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            error_msg = f"Error extracting poster for video {video_name}: {result.stderr}"
+            logger.error(error_msg)
+            return None
+        gcs_poster_path = f'video-posters/{video_name}.jpg'
+        upload_to_gcs(local_file_name, gcs_poster_path)        
+        return gcs_poster_path
+    except Exception as e:
+        error_msg = f"Error extracting and uploading poster for video {video_name}: {e}"
+        logger.error(error_msg)
+        return None
