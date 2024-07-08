@@ -45,9 +45,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
 ]
 
-
-
-
 CORS_ALLOW_CREDENTIALS = True
 
 # Application definition
@@ -176,7 +173,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 # EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'  # Email Backend for testing
 EMAIL_HOST = env("EMAIL_HOST")
@@ -184,6 +180,9 @@ EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = True
+
+CONTACT_EMAIL_1 = env("CONTACT_EMAIL_1")
+CONTACT_EMAIL_2 = env("CONTACT_EMAIL_2")
 
 
 RQ_QUEUES = {

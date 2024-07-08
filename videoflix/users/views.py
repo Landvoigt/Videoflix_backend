@@ -5,7 +5,6 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 
@@ -16,9 +15,7 @@ from rest_framework.authtoken.views import ObtainAuthToken, Token, Response, API
 from rest_framework.decorators import api_view, permission_classes
 from django_rest_passwordreset.models import ResetPasswordToken
 
-
 from .utils import generate_unique_username
-from verification_token.models import EmailVerificationToken
 from verification_token.utils import send_verification_email
 
 
@@ -100,12 +97,16 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     if isinstance(reset_password_token, str):
         return
     user = reset_password_token.user
-    subject = 'Password Reset'
+    subject = 'Videoflix Password Reset'
     token = reset_password_token.key
-    message = render_to_string('reset_password_email.html', {
-        'user': user,
-        'token': token,
-    })
+    reset_password_link = f"http://localhost:4200/reset_password?token={token}"
+    message = (
+        f"Hello {user.username}\n\n"
+        f"You have requested to reset your password. Please click the following link to reset it:\n"
+        f"<a href='{reset_password_link}'>Reset Password</a>\n\n"
+        "This email was sent from the Videoflix reset password form."
+    )
+
     from_email = settings.DEFAULT_FROM_EMAIL
     recipient_list = [user.email]
     send_mail(subject, message, from_email, recipient_list, fail_silently=False)

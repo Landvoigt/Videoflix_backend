@@ -27,6 +27,7 @@ from users.views import UserLoginView, UserCreateView, UserResetPasswordView, Va
 from profiles.views import ProfileViewSet
 from verification_token.views import UserVerifyEmailView
 
+from .views import ContactView
 from videostore.views import get_video_url,get_poster_urls
 from videostore.views import get_all_video_urls
 
@@ -45,6 +46,8 @@ urlpatterns = [
     path('login/', UserLoginView.as_view(), name='login'),
     path('register/', UserCreateView.as_view(), name='register'),
 
+    path('contact/', ContactView.as_view(), name='contact'),
+
     path('api/verify-email/<uuid:token>/', UserVerifyEmailView.as_view(), name='verify_email'),
 
     path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
@@ -62,6 +65,6 @@ urlpatterns = [
     
     path('get-video-url/', get_video_url, name='get_video_url'),
     path('get_poster_urls/', get_poster_urls, name='get_poster_urls'),
-     path('get-all-video-urls/', get_all_video_urls, name='get_all_video_urls'),
+    path('get-all-video-urls/', get_all_video_urls, name='get_all_video_urls'),
   
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
