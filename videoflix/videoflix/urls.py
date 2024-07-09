@@ -45,19 +45,13 @@ urlpatterns = [
     
     path('login/', UserLoginView.as_view(), name='login'),
     path('register/', UserCreateView.as_view(), name='register'),
-
     path('contact/', ContactView.as_view(), name='contact'),
 
     path('api/verify-email/<uuid:token>/', UserVerifyEmailView.as_view(), name='verify_email'),
-
     path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     path('api/password_reset/validate/', ValidateResetTokenView.as_view(), name='password_reset_validate'),
     path('api/password_reset/confirm/<str:uidb64>/<str:token>/', UserResetPasswordView.as_view(), name='password_reset_confirm'),
-    
     path('api/update_username/', user_update_username, name='update_username'),
-
-    # path('profiles/', ProfileViewSet.as_view(), name='profiles'),
-    # path('profiles/<int:pk>/', ProfileViewSet.as_view(), name='profile_detail'),
 
     path('', include(router.urls)), 
 
