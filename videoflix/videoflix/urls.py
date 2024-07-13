@@ -29,7 +29,7 @@ from verification_token.views import UserVerifyEmailView
 
 from .views import ContactView
 from videostore.views import get_video_url,get_poster_urls
-from videostore.views import get_all_video_urls,  get_all_videos
+from videostore.views import get_all_video_urls,  get_all_videos, check_video_data
 
 
 def home_view(request):
@@ -60,5 +60,6 @@ urlpatterns = [
     path('get_poster_urls/', get_poster_urls, name='get_poster_urls'),
     path('get-all-video-urls/', get_all_video_urls, name='get_all_video_urls'),
     path('api/videos/', get_all_videos, name='get_all_videos'),
+    path('check-video-data/', check_video_data, name='check-video-data')
   
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -5,6 +5,8 @@ import redis
 from django.views.decorators.http import require_http_methods
 from google.cloud import storage
 from .models import Video
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=1)
@@ -82,6 +84,17 @@ def get_all_videos(request):
         return JsonResponse({'videos': video_list})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+    
+
+@csrf_exempt
+def check_video_data(request):
+    if request.method == 'POST':
+        video_urls = json.loads(request.body).get('video_urls', [])
+        # Extrahiere die Dateinamen aus den URLs und überprüfe, ob sie in der Datenbank vorhanden sind
+        video_keys = [url.split('/')[-2] for url in video_urls]
+        is_available = all(Video.objects.filter(video_file__contains=video_key).exists() for video_key in video_keys)
+        return JsonResponse({'is_available': is_available})
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 
     
