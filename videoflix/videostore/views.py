@@ -4,6 +4,7 @@ from django.core.cache import cache
 import redis
 from django.views.decorators.http import require_http_methods
 from google.cloud import storage
+from .models import Video
 
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=1)
@@ -63,6 +64,25 @@ def get_all_video_urls(request):
         return JsonResponse({'error': str(e)}, status=500)
  
  
- 
+
+def get_all_videos(request):
+    try:
+        videos = Video.objects.all()
+        video_list = []
+        for video in videos:
+            video_data = {
+                'id': video.id,
+                'title': video.title,
+                'description': video.description,
+                'video_url': video.video_file.url if video.video_file else '',
+                'hls_playlist': video.hls_playlist if video.hls_playlist else ''
+            }
+            video_list.append(video_data)
+
+        return JsonResponse({'videos': video_list})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
     
     
