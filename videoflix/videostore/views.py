@@ -97,5 +97,23 @@ def check_video_data(request):
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
 
-    
-    
+
+def gcs_video_text(request):
+    client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
+    bucket = client.bucket(settings.GS_BUCKET_NAME)
+    object_prefix = 'text/'
+    blobs = bucket.list_blobs(prefix=object_prefix)
+    gcs_data = []
+    for blob in blobs:
+        if blob.name.endswith('/description.txt'):
+            subfolder = blob.name.split('/')[1]
+            title_blob = bucket.get_blob(f'text/{subfolder}/title.txt')
+            data = {
+                'subfolder': subfolder,
+                'description_url': blob.public_url,
+                'title_url': title_blob.public_url if title_blob else '',
+                'description': blob.download_as_text(),
+                'title': title_blob.download_as_text() if title_blob else '',
+            }
+            gcs_data.append(data)
+    return JsonResponse(gcs_data, safe=False)
