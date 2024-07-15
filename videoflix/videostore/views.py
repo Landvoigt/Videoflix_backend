@@ -36,19 +36,6 @@ def get_video_url(request):
 
 
 
-# @require_http_methods(["GET"])
-# def get_poster_urls(request):
-#     try:
-#         client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
-#         bucket = client.bucket(settings.GS_BUCKET_NAME)
-#         prefix = 'video-posters/'
-#         blobs = list(bucket.list_blobs(prefix=prefix))
-#         poster_urls = [f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/{blob.name}' for blob in blobs]
-       
-#         return JsonResponse({'poster_urls': poster_urls})
-#     except Exception as e:
-#         return JsonResponse({'error': str(e)}, status=500)
-    
 @require_http_methods(["GET"])
 def get_poster_urls(request):
     cache_key = 'poster_urls'
@@ -64,24 +51,11 @@ def get_poster_urls(request):
         blobs = list(bucket.list_blobs(prefix=prefix))
         poster_urls = [f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/{blob.name}' for blob in blobs]
 
-        redis_client.setex(cache_key, 3600, json.dumps(poster_urls))  # Cache die Poster URLs für 1 Stunde
+        redis_client.setex(cache_key, 3600, json.dumps(poster_urls))  
 
         return JsonResponse({'poster_urls': poster_urls})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)    
-
-# @require_http_methods(["GET"])
-# def get_all_video_urls(request):
-#     try:
-#         client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
-#         bucket = client.bucket(settings.GS_BUCKET_NAME)
-#         prefix = 'hls/'
-#         blobs = bucket.list_blobs(prefix=prefix)
-#         video_urls = [f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/{blob.name}' 
-#                       for blob in blobs if blob.name.endswith('360p.m3u8')]
-#         return JsonResponse({'video_urls': video_urls})
-#     except Exception as e:
-#         return JsonResponse({'error': str(e)}, status=500)
 
 
 @require_http_methods(["GET"])
@@ -100,32 +74,13 @@ def get_all_video_urls(request):
         video_urls = [f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/{blob.name}' 
                       for blob in blobs if blob.name.endswith('360p.m3u8')]
 
-        redis_client.setex(cache_key, 3600, json.dumps(video_urls))  # Cache die Video URLs für 1 Stunde
+        redis_client.setex(cache_key, 3600, json.dumps(video_urls)) 
 
         return JsonResponse({'video_urls': video_urls})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
  
  
-
-# def get_all_videos(request):
-#     try:
-#         videos = Video.objects.all()
-#         video_list = []
-#         for video in videos:
-#             video_data = {
-#                 'id': video.id,
-#                 'title': video.title,
-#                 'description': video.description,
-#                 'video_url': video.video_file.url if video.video_file else '',
-#                 'hls_playlist': video.hls_playlist if video.hls_playlist else ''
-#             }
-#             video_list.append(video_data)
-
-#         return JsonResponse({'videos': video_list})
-#     except Exception as e:
-#         return JsonResponse({'error': str(e)}, status=500)
-
 
 @require_http_methods(["GET"])
 def get_all_videos(request):
@@ -148,62 +103,32 @@ def get_all_videos(request):
             }
             video_list.append(video_data)
 
-        redis_client.setex(cache_key, 3600, json.dumps(video_list))  # Cache die Videos für 1 Stunde
+        redis_client.setex(cache_key, 3600, json.dumps(video_list))  
 
         return JsonResponse({'videos': video_list})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)    
 
-# @csrf_exempt
-# def check_video_data(request):
-#     if request.method == 'POST':
-#         video_urls = json.loads(request.body).get('video_urls', [])
-#         # Extrahiere die Dateinamen aus den URLs und überprüfe, ob sie in der Datenbank vorhanden sind
-#         video_keys = [url.split('/')[-2] for url in video_urls]
-#         is_available = all(Video.objects.filter(video_file__contains=video_key).exists() for video_key in video_keys)
-#         return JsonResponse({'is_available': is_available})
-#     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
 
 @csrf_exempt
 def check_video_data(request):
     if request.method == 'POST':
         video_urls = json.loads(request.body).get('video_urls', [])
-        # Erzeugen eines Cache-Schlüssels basierend auf den Video-URLs
         cache_key = f"check_video_data:{hash(frozenset(video_urls))}"
         cached_is_available = redis_client.get(cache_key)
         if cached_is_available:
             print('Availability from cache:', cached_is_available.decode('utf-8'))
             return JsonResponse({'is_available': json.loads(cached_is_available)})
 
-        # Extrahiere die Dateinamen aus den URLs und überprüfe, ob sie in der Datenbank vorhanden sind
         video_keys = [url.split('/')[-2] for url in video_urls]
         is_available = all(Video.objects.filter(video_file__contains=video_key).exists() for video_key in video_keys)
 
-        # Speichern des Ergebnisses im Cache
-        redis_client.setex(cache_key, 3600, json.dumps(is_available))  # Cache das Ergebnis für 1 Stunde
+        redis_client.setex(cache_key, 3600, json.dumps(is_available)) 
 
         return JsonResponse({'is_available': is_available})
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-# def gcs_video_text(request):
-#     client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
-#     bucket = client.bucket(settings.GS_BUCKET_NAME)
-#     object_prefix = 'text/'
-#     blobs = bucket.list_blobs(prefix=object_prefix)
-#     gcs_data = []
-#     for blob in blobs:
-#         if blob.name.endswith('/description.txt'):
-#             subfolder = blob.name.split('/')[1]
-#             title_blob = bucket.get_blob(f'text/{subfolder}/title.txt')
-#             data = {
-#                 'subfolder': subfolder,
-#                 'description_url': blob.public_url,
-#                 'title_url': title_blob.public_url if title_blob else '',
-#                 'description': blob.download_as_text(),
-#                 'title': title_blob.download_as_text() if title_blob else '',
-#             }
-#             gcs_data.append(data)
-#     return JsonResponse(gcs_data, safe=False)
 
 
 def gcs_video_text(request):
@@ -232,7 +157,7 @@ def gcs_video_text(request):
                 }
                 gcs_data.append(data)
 
-        redis_client.setex(cache_key, 3600, json.dumps(gcs_data))  # Cache die GCS-Daten für 1 Stunde
+        redis_client.setex(cache_key, 3600, json.dumps(gcs_data)) 
 
         return JsonResponse(gcs_data, safe=False)
     except Exception as e:
