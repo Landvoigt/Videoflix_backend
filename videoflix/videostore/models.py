@@ -10,8 +10,7 @@ class Video(models.Model):
     description = models.CharField(max_length=500)
     video_file = models.FileField(upload_to="videos", blank=True, null=True)
     hls_playlist = models.CharField(max_length=200, blank=True, null=True)
-    # add later
-    # category = models.CharField(max_length=50, blank=True, null=True) 
+    category = models.CharField(max_length=50, blank=True, null=True) 
 
     def save(self, *args, **kwargs):
         if self.video_file and not self.hls_playlist:

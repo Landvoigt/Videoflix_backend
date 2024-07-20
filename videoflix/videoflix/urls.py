@@ -28,7 +28,8 @@ from .views import ContactView
 
 from users.views import UserLoginView, UserCreateView, UserResetPasswordView, ValidateResetTokenView, user_update_username
 from profiles.views import ProfileViewSet
-from videostore.views import get_video_url,get_poster_urls, get_all_video_urls, get_all_videos, gcs_video_text, check_video_data
+# from videostore.views import get_video_url,get_poster_urls, get_all_video_urls, get_all_videos, gcs_video_text
+from videostore.views import get_poster_and_text, get_preview_video, get_full_video
 
 
 def home_view():
@@ -43,12 +44,14 @@ urlpatterns = [
     path('django-rq/', include('django_rq.urls')),
 
     # move to api_patterns later
-    path('get-video-url/', get_video_url, name='get_video_url'),
-    path('get_poster_urls/', get_poster_urls, name='get_poster_urls'),
-    path('get-all-video-urls/', get_all_video_urls, name='get_all_video_urls'),
-    path('api/videos/', get_all_videos, name='get_all_videos'),
-    path('check-video-data/', check_video_data, name='check_video_data'),
-    path('gcs-data/', gcs_video_text, name='gcs_data'),
+    # path('get-video-url/', get_video_url, name='get_video_url'),
+    # path('get_poster_urls/', get_poster_urls, name='get_poster_urls'),
+    # path('get-all-video-urls/', get_all_video_urls, name='get_all_video_urls'),
+    # path('api/videos/', get_all_videos, name='get_all_videos'),
+    # path('gcs-data/', gcs_video_text, name='gcs_data'),
+    path('poster-and-text/', get_poster_and_text, name='get_poster_and_text'),
+    path('preview-video/', get_preview_video, name='get_preview_video'),
+    path('full-video/', get_full_video, name='get_full_video'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
