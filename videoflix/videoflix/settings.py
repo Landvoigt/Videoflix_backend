@@ -224,8 +224,8 @@ MEDIA_URL = "/media/"
 SITE_ID = 1
 
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-GS_BUCKET_NAME = 'videoflix-videos'
-GS_PROJECT_ID = 'mediaproject-426719'
+GS_BUCKET_NAME = 'videoflix-storage'
+GS_PROJECT_ID = 'mediaproject-430106'
 GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
     os.path.join(BASE_DIR, 'service-account-file.json')
 )

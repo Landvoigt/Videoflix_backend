@@ -1,15 +1,11 @@
 from django.conf import settings
 from django.http import JsonResponse
-from django.core.cache import cache
 import redis
 from django.views.decorators.http import require_http_methods
 from google.cloud import storage
-from .models import Video
-from django.views.decorators.csrf import csrf_exempt
 import json
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-import requests
 
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
@@ -80,7 +76,7 @@ def get_preview_video(request):
             print('Video URL from cache:', video_url)
             return JsonResponse({'video_url': video_url})
         
-        video_url = f'https://storage.googleapis.com/videoflix-videos/hls/{video_key}/{resolution}.m3u8'
+        video_url = f'https://storage.googleapis.com/videoflix-storage/hls/{video_key}/{resolution}.m3u8'
         print('Generated video URL:', video_url)
         redis_client.setex(cache_key, 3600, video_url)
 
@@ -108,7 +104,7 @@ def get_full_video(request):
         print('Video URL from cache:', cached_video_url.decode('utf-8'))
         return Response({'video_url': cached_video_url.decode('utf-8')})
 
-    video_url = f'https://storage.googleapis.com/videoflix-videos/hls/{video_key}/{resolution}.m3u8'
+    video_url = f'https://storage.googleapis.com/videoflix-storage/hls/{video_key}/{resolution}.m3u8'
 
     print('Generated video URL:', video_url)
     redis_client.setex(cache_key, 3600, video_url)
