@@ -1,11 +1,11 @@
 from django.conf import settings
-from django.http import JsonResponse
 import redis
 from django.views.decorators.http import require_http_methods
 from google.cloud import storage
 import json
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from django.http import JsonResponse, HttpResponseBadRequest
 
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
@@ -89,26 +89,68 @@ def get_preview_video(request):
         return JsonResponse({'error': 'Internal server error'}, status=500)
 
 
-# nicht fertig
-@require_http_methods(["GET"]) 
+
+@require_http_methods(["GET"])
 def get_full_video(request):
     video_key = request.GET.get('video_key')
-    resolution = request.GET.get('resolution') 
+    resolution = request.GET.get('resolution')
 
     if not video_key or not resolution:
-        return Response({'error': 'Video key and resolution are required'}, status=400)
+        return HttpResponseBadRequest({'error': 'Video key and resolution are required'})
 
     cache_key = f"{video_key}_{resolution}"
     cached_video_url = redis_client.get(cache_key)
     if cached_video_url:
         print('Video URL from cache:', cached_video_url.decode('utf-8'))
-        return Response({'video_url': cached_video_url.decode('utf-8')})
+        return JsonResponse({'video_url': cached_video_url.decode('utf-8')})
 
-    video_url = f'https://storage.googleapis.com/videoflix-storage/hls/{video_key}/{resolution}.m3u8'
+    video_url = f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/hls/{video_key}/{resolution}.m3u8'
 
     print('Generated video URL:', video_url)
     redis_client.setex(cache_key, 3600, video_url)
 
-    return Response({'video_url': video_url})
+    return JsonResponse({'video_url': video_url})
 
 
+
+# @require_http_methods(["GET"])
+# def get_full_video(request):
+#     video_key = request.GET.get('video_key')
+#     resolution = request.GET.get('resolution') 
+
+#     if not video_key or not resolution:
+#         return JsonResponse({'error': 'Video key and resolution are required'}, status=400)
+
+#     cache_key = f"{video_key}_{resolution}"
+#     cached_video_url = redis_client.get(cache_key)
+#     if cached_video_url:
+#         print('Video URL from cache:', cached_video_url.decode('utf-8'))
+#         return JsonResponse({'video_url': cached_video_url.decode('utf-8')})
+
+#     video_url = f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/hls/{video_key}/{resolution}.m3u8'
+
+#     print('Generated video URL:', video_url)
+#     redis_client.setex(cache_key, 3600, video_url)
+
+#     return JsonResponse({'video_url': video_url})
+
+# @require_http_methods(["GET"])
+# def get_preview_video(request):
+#     video_key = request.GET.get('video_key')
+#     resolution = request.GET.get('resolution')
+
+#     if not video_key or not resolution:
+#         return JsonResponse({'error': 'Video key and resolution are required'}, status=400)
+
+#     cache_key = f"{video_key}_{resolution}"
+#     cached_video_url = redis_client.get(cache_key)
+#     if cached_video_url:
+#         print('Video URL from cache:', cached_video_url.decode('utf-8'))
+#         return JsonResponse({'video_url': cached_video_url.decode('utf-8')})
+
+#     video_url = f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/hls/{video_key}/{resolution}.m3u8'
+
+#     print('Generated video URL:', video_url)
+#     redis_client.setex(cache_key, 3600, video_url)
+
+#     return JsonResponse({'video_url': video_url})

@@ -71,16 +71,18 @@ def convert_to_hls(video_id, video_name=None):
 
     base_path = os.path.abspath(os.path.join(settings.MEDIA_ROOT, 'videos', video_name))
     resolutions = ['360', '480', '720', '1080']
+    bitrates = {'360': '800k', '480': '1400k', '720': '2800k', '1080': '5000k'}
 
     if not os.path.exists(base_path):
         os.makedirs(base_path)
+    
     poster_url = extract_and_upload_poster(source, video_name)
     if poster_url:
         logger.info(f"Poster extracted and uploaded to {poster_url}")
     else:
         logger.error("Failed to extract and upload poster")
 
-    cmd = [
+    cmd_base = [
         'ffmpeg',
         '-i', source,
         '-c:a', 'aac',
@@ -97,27 +99,25 @@ def convert_to_hls(video_id, video_name=None):
     ]
 
     for resolution in resolutions:
-        cmd.extend([
-            '-vf', f'scale=-2:{resolution}',
-            '-b:v', f'{int(resolution) * 1000}k',
-            '-hls_segment_filename', f'{base_path}/{resolution}p_%03d.ts',
-            f'{base_path}/{resolution}p.m3u8'
-        ])
+        scale = f'scale=-2:{resolution}'
+        bitrate = bitrates[resolution]
+        output_ts = f'{base_path}/{resolution}p_%03d.ts'
+        output_m3u8 = f'{base_path}/{resolution}p.m3u8'
+        cmd = cmd_base + ['-vf', scale, '-b:v', bitrate, '-hls_segment_filename', output_ts, output_m3u8]
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
-
-    if result.returncode != 0:
-        logger.error(f"Error converting video id {video_id}: {result.stderr}")
-        return
+        logger.info(f"Running FFmpeg command for {resolution}p: {' '.join(cmd)}")
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            logger.error(f"Error converting video id {video_id} for resolution {resolution}: {result.stderr}")
+            return
 
     master_playlist_path = create_master_playlist(base_path, resolutions)
 
-
     if os.path.exists(master_playlist_path):
-      gcs_master_path = f"hls/{video_name}/master.m3u8"
-      upload_to_gcs(master_playlist_path, gcs_master_path)
+        gcs_master_path = f"hls/{video_name}/master.m3u8"
+        upload_to_gcs(master_playlist_path, gcs_master_path)
     else:
-       logger.warning(f"Master playlist {master_playlist_path} does not exist. Skipping upload.")
+        logger.warning(f"Master playlist {master_playlist_path} does not exist. Skipping upload.")
 
     for resolution in resolutions:
         local_playlist = f"{base_path}/{resolution}p.m3u8"
@@ -130,15 +130,14 @@ def convert_to_hls(video_id, video_name=None):
                 if os.path.exists(ts_file):
                     gcs_ts_path = f"hls/{video_name}/{os.path.basename(ts_file)}"
                     upload_to_gcs(ts_file, gcs_ts_path)
-                   
                 else:
                     logger.error(f"TS file {ts_file} does not exist for resolution {resolution} and video id {video_id}")
         else:
             logger.error(f"Resolution {resolution} playlist {local_playlist} does not exist for video id {video_id}")
 
     logger.info("Finished convert_to_hls function")
-    
-   
+
+
 
 def extract_and_upload_poster(video_path, video_name):
     try:
