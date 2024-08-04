@@ -13,6 +13,7 @@ gcs_client = storage.Client(credentials=settings.GS_CREDENTIALS, project=setting
 gcs_bucket = gcs_client.bucket(settings.GS_BUCKET_NAME)
 
 
+
 @api_view(["GET"])
 def get_poster_and_text(request):
     poster_cache_key = 'poster_urls'
@@ -43,20 +44,26 @@ def get_poster_and_text(request):
                 if blob.name.endswith('/description.txt'):
                     subfolder = blob.name.split('/')[1]
                     title_blob = gcs_bucket.get_blob(f'text/{subfolder}/title.txt')
+                    category_blob = gcs_bucket.get_blob(f'text/{subfolder}/category.txt')
                     data = {
                         'subfolder': subfolder,
                         'description': blob.download_as_text(),
                         'title': title_blob.download_as_text() if title_blob else '',
+                        'category': category_blob.download_as_text() if category_blob else '',
                     }
                     gcs_data.append(data)
             redis_client.setex(text_cache_key, 3600, json.dumps(gcs_data))
         except Exception as e:
             return Response({'error': f'Error fetching GCS video text data: {str(e)}'}, status=500)
+    
     response_data = {
         'poster_urls': poster_urls,
         'gcs_video_text_data': gcs_data
     }
     return Response(response_data)
+
+
+
 
 
 
