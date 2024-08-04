@@ -24,7 +24,6 @@ class Video(models.Model):
 
         super().save(*args, **kwargs)
 
-        # Upload title, description, and category to GCS
         if self.video_file:
             self.upload_text_to_gcs()
 
@@ -32,27 +31,22 @@ class Video(models.Model):
         gcs_client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
         gcs_bucket = gcs_client.bucket(settings.GS_BUCKET_NAME)
 
-        # Extract base name without extension
         video_name = os.path.splitext(os.path.basename(self.video_file.name))[0]
 
-        # Define the paths for title, description, and category
         gcs_base_path = f"text/{video_name}/"
         title_path = os.path.join(gcs_base_path, 'title.txt')
         description_path = os.path.join(gcs_base_path, 'description.txt')
         category_path = os.path.join(gcs_base_path, 'category.txt')
 
-        # Debugging output
         print(f"Uploading files to GCS:\n Title path: {title_path}\n Description path: {description_path}\n Category path: {category_path}")
         print(f"Title content: {self.title}\n Description content: {self.description}\n Category content: {self.category}")
 
-        # Create or update the files in GCS
         self._upload_to_gcs(gcs_bucket, title_path, self.title or "")
         self._upload_to_gcs(gcs_bucket, description_path, self.description or "")
         self._upload_to_gcs(gcs_bucket, category_path, self.category or "")
 
     def _upload_to_gcs(self, bucket, path, content):
         blob = bucket.blob(path)
-        # Debugging output
         print(f"Uploading to GCS path: {path} with content: {content}")
         blob.upload_from_string(content)
 

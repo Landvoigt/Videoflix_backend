@@ -64,9 +64,6 @@ def get_poster_and_text(request):
 
 
 
-
-
-
 @require_http_methods(["GET"])
 def get_preview_video(request):
     video_key = request.GET.get('video_key')
@@ -119,45 +116,3 @@ def get_full_video(request):
     return JsonResponse({'video_url': video_url})
 
 
-
-# @require_http_methods(["GET"])
-# def get_full_video(request):
-#     video_key = request.GET.get('video_key')
-#     resolution = request.GET.get('resolution') 
-
-#     if not video_key or not resolution:
-#         return JsonResponse({'error': 'Video key and resolution are required'}, status=400)
-
-#     cache_key = f"{video_key}_{resolution}"
-#     cached_video_url = redis_client.get(cache_key)
-#     if cached_video_url:
-#         print('Video URL from cache:', cached_video_url.decode('utf-8'))
-#         return JsonResponse({'video_url': cached_video_url.decode('utf-8')})
-
-#     video_url = f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/hls/{video_key}/{resolution}.m3u8'
-
-#     print('Generated video URL:', video_url)
-#     redis_client.setex(cache_key, 3600, video_url)
-
-#     return JsonResponse({'video_url': video_url})
-
-# @require_http_methods(["GET"])
-# def get_preview_video(request):
-#     video_key = request.GET.get('video_key')
-#     resolution = request.GET.get('resolution')
-
-#     if not video_key or not resolution:
-#         return JsonResponse({'error': 'Video key and resolution are required'}, status=400)
-
-#     cache_key = f"{video_key}_{resolution}"
-#     cached_video_url = redis_client.get(cache_key)
-#     if cached_video_url:
-#         print('Video URL from cache:', cached_video_url.decode('utf-8'))
-#         return JsonResponse({'video_url': cached_video_url.decode('utf-8')})
-
-#     video_url = f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/hls/{video_key}/{resolution}.m3u8'
-
-#     print('Generated video URL:', video_url)
-#     redis_client.setex(cache_key, 3600, video_url)
-
-#     return JsonResponse({'video_url': video_url})
