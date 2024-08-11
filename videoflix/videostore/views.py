@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 import redis
 from django.views.decorators.http import require_http_methods
 from google.cloud import storage
@@ -116,3 +117,58 @@ def get_full_video(request):
     return JsonResponse({'video_url': video_url})
 
 
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def create_gcs_myFilms(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        file_name = data.get('file_name')
+        
+        if not file_name:
+            return JsonResponse({'error': 'file_name is required'}, status=400)
+        
+        main_folder = 'myFilms/'
+        sub_folder = f'{main_folder}{file_name}/'
+
+        if not gcs_bucket.blob(sub_folder).exists():
+            gcs_bucket.blob(sub_folder + 'placeholder.txt').upload_from_string('')
+            print(f'Unterordner "{sub_folder}" erstellt')
+
+        folder_url = f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/{sub_folder}'
+
+        return JsonResponse({'message': f'Ordner "{sub_folder}" erfolgreich erstellt', 'url': folder_url}, status=201)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+    
+    
+@api_view(["GET"])
+def get_myFilms(request):
+    cache_key = 'my_films_subfolders'
+    subfolders = redis_client.get(cache_key)
+    
+    if subfolders:
+        subfolders = json.loads(subfolders)
+        print('Subfolders from cache:', subfolders)
+    else:
+        try:
+            prefix = 'myFilms/'
+            blobs = gcs_bucket.list_blobs(prefix=prefix)
+            subfolder_names = set()
+            
+            for blob in blobs:
+                if blob.name.endswith('placeholder.txt'):
+                    parts = blob.name.split('/')
+                    if len(parts) > 1:
+                        subfolder_name = parts[1]
+                        subfolder_names.add(subfolder_name)
+            
+            subfolders = list(subfolder_names)
+            redis_client.setex(cache_key, 3600, json.dumps(subfolders))
+        except Exception as e:
+            return Response({'error': f'Error fetching subfolder names: {str(e)}'}, status=500)
+    
+    return Response({'subfolders': subfolders})

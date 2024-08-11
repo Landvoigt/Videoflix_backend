@@ -29,7 +29,7 @@ from .views import ContactView
 from users.views import UserLoginView, UserCreateView, UserResetPasswordView, ValidateResetTokenView, user_update_username
 from profiles.views import ProfileViewSet
 # from videostore.views import get_video_url,get_poster_urls, get_all_video_urls, get_all_videos, gcs_video_text
-from videostore.views import get_poster_and_text, get_preview_video, get_full_video
+from videostore.views import get_poster_and_text, get_preview_video, get_full_video, create_gcs_myFilms, get_myFilms
 
 
 def home_view():
@@ -52,6 +52,8 @@ urlpatterns = [
     path('poster-and-text/', get_poster_and_text, name='get_poster_and_text'),
     path('preview-video/', get_preview_video, name='get_preview_video'),
     path('full-video/', get_full_video, name='get_full_video'),
+    path('my-films/', create_gcs_myFilms, name='create_gcs_myFilms'),
+    path('list-myFilms/', get_myFilms, name='get_myFilms'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
