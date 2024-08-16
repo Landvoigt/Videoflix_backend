@@ -118,7 +118,6 @@ def get_full_video(request):
 
 
 
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def create_gcs_myFilms(request):
@@ -144,7 +143,8 @@ def create_gcs_myFilms(request):
         return JsonResponse({'error': str(e)}, status=500)
     
     
-    
+
+
 @api_view(["GET"])
 def get_myFilms(request):
     cache_key = 'my_films_subfolders'
