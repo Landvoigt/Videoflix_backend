@@ -43,17 +43,11 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('django-rq/', include('django_rq.urls')),
 
-    # move to api_patterns later
-    # path('get-video-url/', get_video_url, name='get_video_url'),
-    # path('get_poster_urls/', get_poster_urls, name='get_poster_urls'),
-    # path('get-all-video-urls/', get_all_video_urls, name='get_all_video_urls'),
-    # path('api/videos/', get_all_videos, name='get_all_videos'),
-    # path('gcs-data/', gcs_video_text, name='gcs_data'),
-    path('poster-and-text/', get_poster_and_text, name='get_poster_and_text'),
-    path('preview-video/', get_preview_video, name='get_preview_video'),
+    path('video/info/', get_poster_and_text, name='video_info'),
+    path('video/playlist/', get_myFilms, name='get_myFilms'),
+    path('video/preview/', get_preview_video, name='get_preview_video'),
     path('full-video/', get_full_video, name='get_full_video'),
     path('my-films/', create_gcs_myFilms, name='create_gcs_myFilms'),
-    path('list-myFilms/', get_myFilms, name='get_myFilms'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
@@ -63,7 +57,7 @@ api_patterns = [
     path('contact/', ContactView.as_view(), name='contact'),
     path('update_username/', user_update_username, name='update_username'),
 
-    path('verify-email/<uuid:token>/', UserVerifyEmailView.as_view(), name='verify_email'),
+    path('verify_email/<uuid:token>/', UserVerifyEmailView.as_view(), name='verify_email'),
     path('password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     path('password_reset/validate/', ValidateResetTokenView.as_view(), name='password_reset_validate'),
     path('password_reset/confirm/<str:uidb64>/<str:token>/', UserResetPasswordView.as_view(), name='password_reset_confirm'),

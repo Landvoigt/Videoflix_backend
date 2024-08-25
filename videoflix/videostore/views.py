@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 import redis
@@ -13,56 +14,85 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 gcs_client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
 gcs_bucket = gcs_client.bucket(settings.GS_BUCKET_NAME)
 
-
+@dataclass
+class VideoData:
+    subfolder: str
+    title: str
+    description: str
+    category: str
+    posterUrlGcs: str
 
 @api_view(["GET"])
 def get_poster_and_text(request):
+    try:
+        poster_urls = get_poster_urls()
+        gcs_data = get_gcs_video_text_data(poster_urls)
+        return Response([video.__dict__ for video in gcs_data])
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
+    
+def get_poster_urls():
     poster_cache_key = 'poster_urls'
     poster_urls = redis_client.get(poster_cache_key)
     if poster_urls:
-        poster_urls = json.loads(poster_urls)
-        print('Poster URLs from cache:', poster_urls)
-    else:
-        try:
-            prefix = 'video-posters/'
-            blobs = list(gcs_bucket.list_blobs(prefix=prefix))
-            poster_urls = [f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/{blob.name}' for blob in blobs]
-            redis_client.setex(poster_cache_key, 3600, json.dumps(poster_urls))
-        except Exception as e:
-            return Response({'error': f'Error fetching poster URLs: {str(e)}'}, status=500)
+        return json.loads(poster_urls)
+    
+    try:
+        prefix = 'video-posters/'
+        blobs = list(gcs_bucket.list_blobs(prefix=prefix))
+        poster_urls = [f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/{blob.name}' for blob in blobs]
+        redis_client.setex(poster_cache_key, 3600, json.dumps(poster_urls))
+        return poster_urls
+    except Exception as e:
+        raise Exception(f'Error fetching poster URLs: {str(e)}')
 
+def get_gcs_video_text_data(poster_urls):
     text_cache_key = 'gcs_video_text_data'
     gcs_data = redis_client.get(text_cache_key)
     if gcs_data:
-        gcs_data = json.loads(gcs_data)
-        print('GCS data from cache:', gcs_data)
-    else:
-        try:
-            prefix = 'text/'
-            blobs = gcs_bucket.list_blobs(prefix=prefix)
-            gcs_data = []
-            for blob in blobs:
-                if blob.name.endswith('/description.txt'):
-                    subfolder = blob.name.split('/')[1]
-                    title_blob = gcs_bucket.get_blob(f'text/{subfolder}/title.txt')
-                    category_blob = gcs_bucket.get_blob(f'text/{subfolder}/category.txt')
-                    data = {
-                        'subfolder': subfolder,
-                        'description': blob.download_as_text(),
-                        'title': title_blob.download_as_text() if title_blob else '',
-                        'category': category_blob.download_as_text() if category_blob else '',
-                    }
-                    gcs_data.append(data)
-            redis_client.setex(text_cache_key, 3600, json.dumps(gcs_data))
-        except Exception as e:
-            return Response({'error': f'Error fetching GCS video text data: {str(e)}'}, status=500)
+        return [VideoData(**video) for video in json.loads(gcs_data)]
     
-    response_data = {
-        'poster_urls': poster_urls,
-        'gcs_video_text_data': gcs_data
-    }
-    return Response(response_data)
+    try:
+        gcs_data = fetch_video_text_data_from_gcs(poster_urls)
+        cache_gcs_video_text_data(text_cache_key, gcs_data)
+        return gcs_data
+    except Exception as e:
+        raise Exception(f'Error fetching GCS video text data: {str(e)}')
 
+def create_video_data_from_blob(blob, poster_urls):
+    subfolder = extract_subfolder_from_blob(blob)
+    
+    title_blob = gcs_bucket.get_blob(f'text/{subfolder}/title.txt')
+    title = title_blob.download_as_text() if title_blob else ''
+    
+    category_blob = gcs_bucket.get_blob(f'text/{subfolder}/category.txt')
+    category = category_blob.download_as_text() if category_blob else ''
+    
+    poster_url = next((url for url in poster_urls if subfolder in url), None)
+    
+    return VideoData(
+        subfolder=subfolder,
+        title=title,
+        description=blob.download_as_text(),
+        category=category,
+        posterUrlGcs=poster_url
+    )
+
+def extract_subfolder_from_blob(blob):
+    return blob.name.split('/')[1]
+
+def cache_gcs_video_text_data(text_cache_key, gcs_data):
+    redis_client.setex(text_cache_key, 3600, json.dumps([video.__dict__ for video in gcs_data]))
+
+def fetch_video_text_data_from_gcs(poster_urls):
+    prefix = 'text/'
+    blobs = gcs_bucket.list_blobs(prefix=prefix)
+    gcs_data = []
+    for blob in blobs:
+        if blob.name.endswith('/description.txt'):
+            video_data = create_video_data_from_blob(blob, poster_urls)
+            gcs_data.append(video_data)
+    return gcs_data
 
 
 @require_http_methods(["GET"])
@@ -171,4 +201,4 @@ def get_myFilms(request):
         except Exception as e:
             return Response({'error': f'Error fetching subfolder names: {str(e)}'}, status=500)
     
-    return Response({'subfolders': subfolders})
+    return Response(subfolders)
