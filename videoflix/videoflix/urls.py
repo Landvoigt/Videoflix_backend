@@ -28,7 +28,6 @@ from .views import ContactView
 
 from users.views import UserLoginView, UserCreateView, UserResetPasswordView, ValidateResetTokenView, user_update_username
 from profiles.views import ProfileViewSet
-# from videostore.views import get_video_url,get_poster_urls, get_all_video_urls, get_all_videos, gcs_video_text
 from videostore.views import get_poster_and_text, get_preview_video, get_full_video, create_gcs_myFilms, get_myFilms
 
 
@@ -43,11 +42,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('django-rq/', include('django_rq.urls')),
 
-    path('video/info/', get_poster_and_text, name='video_info'),
-    path('video/playlist/', get_myFilms, name='get_myFilms'),
-    path('video/preview/', get_preview_video, name='get_preview_video'),
-    path('full-video/', get_full_video, name='get_full_video'),
-    path('my-films/', create_gcs_myFilms, name='create_gcs_myFilms'),
+    # path('full-video/', get_full_video, name='get_full_video'),
+    # path('my-films/', create_gcs_myFilms, name='create_gcs_myFilms'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
@@ -62,12 +58,9 @@ api_patterns = [
     path('password_reset/validate/', ValidateResetTokenView.as_view(), name='password_reset_validate'),
     path('password_reset/confirm/<str:uidb64>/<str:token>/', UserResetPasswordView.as_view(), name='password_reset_confirm'),
     
-    # path('get-video-url/', get_video_url, name='get_video_url'),
-    # path('get_poster_urls/', get_poster_urls, name='get_poster_urls'),
-    # path('get-all-video-urls/', get_all_video_urls, name='get_all_video_urls'),
-    # path('videos/', get_all_videos, name='get_all_videos'),
-    # path('check-video-data/', check_video_data, name='check_video_data'),
-    # path('gcs-data/', gcs_video_text, name='gcs_data'),
+    path('video/info/', get_poster_and_text, name='video_info'),
+    path('video/playlist/', get_myFilms, name='get_myFilms'),
+    path('video/preview/', get_preview_video, name='get_preview_video'),
 
     path('', include(router.urls)),
 ]
