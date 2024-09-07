@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import datetime
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 import redis
@@ -8,6 +9,7 @@ import json
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.http import JsonResponse, HttpResponseBadRequest
+from datetime import date
 
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
@@ -21,6 +23,9 @@ class VideoData:
     description: str
     category: str
     posterUrlGcs: str
+    age: str
+    resolution: str
+    release_date: str
 
 @api_view(["GET"])
 def get_poster_and_text(request):
@@ -59,6 +64,7 @@ def get_gcs_video_text_data(poster_urls):
     except Exception as e:
         raise Exception(f'Error fetching GCS video text data: {str(e)}')
 
+
 def create_video_data_from_blob(blob, poster_urls):
     subfolder = extract_subfolder_from_blob(blob)
     
@@ -68,6 +74,15 @@ def create_video_data_from_blob(blob, poster_urls):
     category_blob = gcs_bucket.get_blob(f'text/{subfolder}/category.txt')
     category = category_blob.download_as_text() if category_blob else ''
     
+    age_blob = gcs_bucket.get_blob(f'text/{subfolder}/age.txt')
+    age = age_blob.download_as_text().strip() if age_blob else '0'
+    
+    resolution_blob = gcs_bucket.get_blob(f'text/{subfolder}/resolution.txt')
+    resolution = resolution_blob.download_as_text().strip() if resolution_blob else 'HD'
+    
+    release_date_blob = gcs_bucket.get_blob(f'text/{subfolder}/release_date.txt')
+    release_date = release_date_blob.download_as_text().strip() if release_date_blob else '2020'
+    
     poster_url = next((url for url in poster_urls if subfolder in url), None)
     
     return VideoData(
@@ -75,14 +90,20 @@ def create_video_data_from_blob(blob, poster_urls):
         title=title,
         description=blob.download_as_text(),
         category=category,
-        posterUrlGcs=poster_url
+        age=age,
+        resolution=resolution,
+        posterUrlGcs=poster_url,
+        release_date=release_date
     )
+
 
 def extract_subfolder_from_blob(blob):
     return blob.name.split('/')[1]
 
+
 def cache_gcs_video_text_data(text_cache_key, gcs_data):
     redis_client.setex(text_cache_key, 3600, json.dumps([video.__dict__ for video in gcs_data]))
+
 
 def fetch_video_text_data_from_gcs(poster_urls):
     prefix = 'text/'
@@ -173,7 +194,6 @@ def create_gcs_myFilms(request):
         return JsonResponse({'error': str(e)}, status=500)
     
     
-
 
 @api_view(["GET"])
 def get_myFilms(request):
