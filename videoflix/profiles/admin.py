@@ -12,7 +12,7 @@ class ProfileAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'active', 'created_at',)
     fieldsets = (
         (None, {
-            'fields': ('id', 'active', 'name', 'description', 'avatar_id', 'user', 'created_at')
+            'fields': ('id', 'active', 'name', 'description', 'avatar_id', 'user', 'created_at', 'liked_list', 'view_list')
         }),
     )
 

@@ -12,8 +12,12 @@ class Profile(models.Model):
     avatar_id = models.SmallIntegerField()
     active = models.BooleanField(default=False)
     language = models.CharField(max_length=40, blank=True, null=True)
+
+    # For now using this with url strings
+    liked_list = ArrayField(models.CharField(max_length=255), blank=True, default=list)
+
+    # Later we will save only ids    
     view_list = ArrayField(models.IntegerField(), blank=True, default=list)
-    liked_list = ArrayField(models.IntegerField(), blank=True, default=list)
 
     def save(self, *args, **kwargs):
         self.full_clean()

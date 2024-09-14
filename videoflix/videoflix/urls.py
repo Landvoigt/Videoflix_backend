@@ -31,7 +31,7 @@ from profiles.views import ProfileViewSet
 from videostore.views import get_poster_and_text, get_preview_video, get_full_video, create_gcs_myFilms, get_myFilms
 
 
-def home_view():
+def home_view(response):
     return HttpResponse("Welcome to the home page!")
 
 router = DefaultRouter()
@@ -41,9 +41,6 @@ urlpatterns = [
     path('', home_view, name='home'),
     path('admin/', admin.site.urls),
     path('django-rq/', include('django_rq.urls')),
-
-    # path('full-video/', get_full_video, name='get_full_video'),
-    # path('my-films/', create_gcs_myFilms, name='create_gcs_myFilms'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
