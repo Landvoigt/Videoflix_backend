@@ -192,8 +192,7 @@ def create_gcs_myFilms(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
-    
+
 
 @api_view(["GET"])
 def get_myFilms(request):

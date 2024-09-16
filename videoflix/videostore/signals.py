@@ -53,8 +53,6 @@ def delete_django_admin_video(sender, instance, **kwargs):
                 logger.error(f"Error deleting directory {video_dir}: {e}")
 
 
-               
-
 @receiver(post_delete, sender=Video)
 def delete_gcs_video(sender, instance, **kwargs):
     try:
@@ -85,6 +83,3 @@ def delete_gcs_video(sender, instance, **kwargs):
 
     except Exception as e:
         logger.error(f"Error deleting HLS files from Google Cloud Storage: {e}")
-
-
-
