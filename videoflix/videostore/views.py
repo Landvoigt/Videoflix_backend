@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import datetime
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 import redis
@@ -9,10 +8,9 @@ import json
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.http import JsonResponse, HttpResponseBadRequest
-from datetime import date
 
 
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=1)
 gcs_client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
 gcs_bucket = gcs_client.bucket(settings.GS_BUCKET_NAME)
 
@@ -22,6 +20,7 @@ class VideoData:
     title: str
     description: str
     category: str
+    hlsPlaylistUrl: str
     posterUrlGcs: str
     age: str
     resolution: str
@@ -67,6 +66,9 @@ def get_gcs_video_text_data(poster_urls):
 
 def create_video_data_from_blob(blob, poster_urls):
     subfolder = extract_subfolder_from_blob(blob)
+
+    playlist_url_blob = gcs_bucket.get_blob(f'text/{subfolder}/hlsPlaylist.txt')
+    hlsPlaylistUrl = playlist_url_blob.download_as_text() if playlist_url_blob else ''
     
     title_blob = gcs_bucket.get_blob(f'text/{subfolder}/title.txt')
     title = title_blob.download_as_text() if title_blob else ''
@@ -90,6 +92,7 @@ def create_video_data_from_blob(blob, poster_urls):
         title=title,
         description=blob.download_as_text(),
         category=category,
+        hlsPlaylistUrl=hlsPlaylistUrl,
         age=age,
         resolution=resolution,
         posterUrlGcs=poster_url,
