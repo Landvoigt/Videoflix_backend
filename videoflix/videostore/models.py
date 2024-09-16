@@ -66,6 +66,7 @@ class Video(models.Model):
         video_name = os.path.splitext(os.path.basename(self.video_file.name))[0]
         gcs_base_path = f"text/{video_name}/"
 
+        hls_playlist_url = os.path.join(gcs_base_path, 'hlsPlaylist.txt')
         title_path = os.path.join(gcs_base_path, 'title.txt')
         description_path = os.path.join(gcs_base_path, 'description.txt')
         category_path = os.path.join(gcs_base_path, 'category.txt')
@@ -73,6 +74,7 @@ class Video(models.Model):
         resolution_path = os.path.join(gcs_base_path, 'resolution.txt')
         release_date_path = os.path.join(gcs_base_path, 'release_date.txt')
 
+        self._upload_to_gcs(gcs_bucket, hls_playlist_url, self.hls_playlist or "")
         self._upload_to_gcs(gcs_bucket, title_path, self.title or "")
         self._upload_to_gcs(gcs_bucket, description_path, self.description or "")
         self._upload_to_gcs(gcs_bucket, category_path, self.category or "")
