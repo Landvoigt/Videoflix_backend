@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view
 from django.http import JsonResponse, HttpResponseBadRequest
 
 
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=1)
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 gcs_client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
 gcs_bucket = gcs_client.bucket(settings.GS_BUCKET_NAME)
 
