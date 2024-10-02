@@ -96,7 +96,7 @@ class Video(models.Model):
         self._upload_to_gcs(gcs_bucket, age_path, self.age or "0") 
         self._upload_to_gcs(gcs_bucket, resolution_path, self.resolution or "HD")
         self._upload_to_gcs(gcs_bucket, release_date_path, self.release_date or "2020")
-        self._upload_to_gcs(gcs_bucket, video_duration_path, self.video_duration or "00:00:00")
+        self._upload_to_gcs(gcs_bucket, video_duration_path, self.video_duration or "0:00:00")
 
     def _upload_to_gcs(self, bucket, path, content):
         blob = bucket.blob(path)
@@ -105,3 +105,34 @@ class Video(models.Model):
 
     def __str__(self):
         return self.title
+    
+    
+    
+# def get_video_duration(self):
+#     if not self.video_file:
+#         return "00:00:00"
+
+#     try:
+#         # Temporäre Datei erstellen
+#         with tempfile.NamedTemporaryFile(delete=True) as temp_file:
+#             # Datei von Google Cloud Storage herunterladen, wenn sie nicht lokal vorliegt
+#             if not os.path.exists(self.video_file.path):
+#                 gcs_client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
+#                 bucket = gcs_client.bucket(settings.GS_BUCKET_NAME)
+#                 blob = bucket.blob(self.video_file.name)
+#                 blob.download_to_filename(temp_file.name)
+#                 video_path = temp_file.name
+#                 print(video_path)
+#             else:
+#                 video_path = self.video_file.path
+
+#             # moviepy verwenden, um die Dauer zu berechnen
+#             clip = VideoFileClip(video_path)
+#             duration_in_seconds = clip.duration
+#             clip.close()
+
+#         return str(int(duration_in_seconds // 3600)).zfill(2) + ':' + str(int((duration_in_seconds % 3600) // 60)).zfill(2) + ':' + str(int(duration_in_seconds % 60)).zfill(2)
+
+#     except Exception as e:
+#         print(f"Fehler beim Berechnen der Videodauer: {e}")
+#         return "00:00:00"

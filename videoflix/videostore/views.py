@@ -51,15 +51,17 @@ def get_poster_urls():
     except Exception as e:
         raise Exception(f'Error fetching poster URLs: {str(e)}')
 
+
 def get_gcs_video_text_data(poster_urls):
     text_cache_key = 'gcs_video_text_data'
     gcs_data = redis_client.get(text_cache_key)
+    
     if gcs_data:
         return [VideoData(**video) for video in json.loads(gcs_data)]
-    
     try:
         gcs_data = fetch_video_text_data_from_gcs(poster_urls)
         cache_gcs_video_text_data(text_cache_key, gcs_data)
+        
         return gcs_data
     except Exception as e:
         raise Exception(f'Error fetching GCS video text data: {str(e)}')
@@ -86,8 +88,8 @@ def create_video_data_from_blob(blob, poster_urls):
     release_date_blob = gcs_bucket.get_blob(f'text/{subfolder}/release_date.txt')
     release_date = release_date_blob.download_as_text().strip() if release_date_blob else '2020'
     
-    video_duration_blob = gcs_bucket.get_blob(f'text/{subfolder}/ video_duration.txt')
-    video_duration = release_date_blob.download_as_text().strip() if video_duration_blob else '00:00:00'
+    video_duration_blob = gcs_bucket.get_blob(f'text/{subfolder}/video_duration.txt')
+    video_duration = video_duration_blob.download_as_text().strip() if video_duration_blob else '0:00:00'
     
     poster_url = next((url for url in poster_urls if subfolder in url), None)
     
@@ -229,3 +231,6 @@ def get_myFilms(request):
             return Response({'error': f'Error fetching subfolder names: {str(e)}'}, status=500)
     
     return Response(subfolders)
+
+
+
