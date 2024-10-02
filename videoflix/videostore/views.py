@@ -25,6 +25,7 @@ class VideoData:
     age: str
     resolution: str
     release_date: str
+    video_duration: str
 
 @api_view(["GET"])
 def get_poster_and_text(request):
@@ -85,6 +86,9 @@ def create_video_data_from_blob(blob, poster_urls):
     release_date_blob = gcs_bucket.get_blob(f'text/{subfolder}/release_date.txt')
     release_date = release_date_blob.download_as_text().strip() if release_date_blob else '2020'
     
+    video_duration_blob = gcs_bucket.get_blob(f'text/{subfolder}/ video_duration.txt')
+    video_duration = release_date_blob.download_as_text().strip() if video_duration_blob else '00:00:00'
+    
     poster_url = next((url for url in poster_urls if subfolder in url), None)
     
     return VideoData(
@@ -96,7 +100,8 @@ def create_video_data_from_blob(blob, poster_urls):
         age=age,
         resolution=resolution,
         posterUrlGcs=poster_url,
-        release_date=release_date
+        release_date=release_date,
+        video_duration=video_duration
     )
 
 
