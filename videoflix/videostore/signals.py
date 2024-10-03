@@ -7,13 +7,12 @@ import django_rq
 from django.conf import settings
 from google.cloud import storage
 import shutil
-# from django.dispatch import Signal
+
+
+
 
 logger = logging.getLogger(__name__)
 
-
-
-# video_post_save = Signal()
 
 @receiver(post_save, sender=Video)
 def video_post_save(sender, instance, created, **kwargs):
@@ -109,5 +108,3 @@ def delete_gcs_video(sender, instance, **kwargs):
 
     except Exception as e:
         logger.error(f"Error deleting files from Google Cloud Storage: {e}")
-
-

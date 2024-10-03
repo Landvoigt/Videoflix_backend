@@ -89,7 +89,7 @@ def create_video_data_from_blob(blob, poster_urls):
     release_date = release_date_blob.download_as_text().strip() if release_date_blob else '2020'
     
     video_duration_blob = gcs_bucket.get_blob(f'text/{subfolder}/video_duration.txt')
-    video_duration = video_duration_blob.download_as_text().strip() if video_duration_blob else '0:00:00'
+    video_duration = video_duration_blob.download_as_text().strip() if video_duration_blob else '00:00:00'
     
     poster_url = next((url for url in poster_urls if subfolder in url), None)
     

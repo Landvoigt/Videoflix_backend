@@ -7,6 +7,7 @@ from google.cloud import storage
 from videostore.models import Video
 import time
 
+
 logger = logging.getLogger(__name__)
 
 
