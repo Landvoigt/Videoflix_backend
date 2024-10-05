@@ -7,11 +7,28 @@ import django_rq
 from django.conf import settings
 from google.cloud import storage
 import shutil
+import subprocess
+import json
 
 
 
 
 logger = logging.getLogger(__name__)
+
+
+# @receiver(post_save, sender=Video)
+# def video_post_save(sender, instance, created, **kwargs):
+#     if created:
+#         queue = django_rq.get_queue('default', autocommit=True)
+#         logger.info(f"Enqueuing video id {instance.id} for conversion")
+#         print(f"Enqueuing video id {instance.id} for conversion")
+
+#         video_name, _ = os.path.splitext(os.path.basename(instance.video_file.path))
+
+#         from .tasks import convert_to_hls
+#         queue.enqueue(convert_to_hls, instance.id, video_name=video_name)
+#         print(f"Video enqueued for HLS conversion: ID {instance.id}, Name {video_name}")
+#         logger.debug(f"Video enqueued for HLS conversion: ID {instance.id}, Name {video_name}")
 
 
 @receiver(post_save, sender=Video)
@@ -20,9 +37,9 @@ def video_post_save(sender, instance, created, **kwargs):
         queue = django_rq.get_queue('default', autocommit=True)
         logger.info(f"Enqueuing video id {instance.id} for conversion")
         print(f"Enqueuing video id {instance.id} for conversion")
-
         video_name, _ = os.path.splitext(os.path.basename(instance.video_file.path))
-
+        video = Video.objects.get(id=instance.id)
+        get_video_duration(video)
         from .tasks import convert_to_hls
         queue.enqueue(convert_to_hls, instance.id, video_name=video_name)
         print(f"Video enqueued for HLS conversion: ID {instance.id}, Name {video_name}")
@@ -108,3 +125,43 @@ def delete_gcs_video(sender, instance, **kwargs):
 
     except Exception as e:
         logger.error(f"Error deleting files from Google Cloud Storage: {e}")
+        
+        
+        
+def get_video_duration(video):
+    video_path = video.video_file.path
+    try:
+        if not os.path.exists(video_path):
+            logger.error(f"Videodatei nicht gefunden: {video_path}")
+            return "00:00:00"
+        result = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "json", video_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        logger.info(f"ffprobe stdout: {result.stdout}")
+        logger.error(f"ffprobe stderr: {result.stderr}")
+        if result.returncode != 0:
+            logger.error(f"ffprobe Fehler beim Auslesen der Videodauer: {result.stderr}")
+            return "00:00:00"
+        result_json = json.loads(result.stdout)
+        if 'format' not in result_json or 'duration' not in result_json['format']:
+            logger.error("Videodauer konnte nicht aus der ffprobe-Antwort extrahiert werden.")
+            return "00:00:00"
+        duration = float(result_json['format']['duration'])
+        logger.info(f"Videodauer (Sekunden): {duration}")
+        total_seconds = int(duration)
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        video_duration_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+        video.video_duration = video_duration_str
+        video.save()
+        logger.info(f"Videodauer {video_duration_str} wurde im Video-Objekt gespeichert.")
+        return video_duration_str
+    except json.JSONDecodeError as e:
+        logger.error(f"Fehler beim Parsen der JSON-Antwort von ffprobe: {e}")
+        return "00:00:00"
+    except Exception as e:
+        logger.error(f"Allgemeiner Fehler bei der Ermittlung der Videodauer: {e}")
+        return "00:00:00"
