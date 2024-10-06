@@ -5,6 +5,7 @@ from datetime import date
 from django.db import models
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +54,7 @@ class Video(models.Model):
             video_name = os.path.splitext(os.path.basename(self.video_file.name))[0]
             gcs_url = f"https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/hls/{video_name}/master.m3u8"
             self.hls_playlist = gcs_url
-
+       
         if self.video_file:
             self.video_file.name = os.path.basename(self.video_file.name)
             
@@ -79,10 +80,12 @@ class Video(models.Model):
         age_path = os.path.join(gcs_base_path, 'age.txt')
         resolution_path = os.path.join(gcs_base_path, 'resolution.txt')
         release_date_path = os.path.join(gcs_base_path, 'release_date.txt')
-        video_duration_path = os.path.join(gcs_base_path, 'video_duration.txt') 
+        video_duration_path = os.path.join(gcs_base_path, 'video_duration.txt')
         
-        formatted_duration = self.format_duration(self.video_duration or "00:00:00")
-        
+        from .signals import get_video_duration
+        if not self.video_duration:
+           self.video_duration = get_video_duration(self) 
+                
         self._upload_to_gcs(gcs_bucket, hls_playlist_url, self.hls_playlist or "")
         self._upload_to_gcs(gcs_bucket, title_path, self.title or "")
         self._upload_to_gcs(gcs_bucket, description_path, self.description or "")
@@ -90,7 +93,7 @@ class Video(models.Model):
         self._upload_to_gcs(gcs_bucket, age_path, self.age or "0") 
         self._upload_to_gcs(gcs_bucket, resolution_path, self.resolution or "HD")
         self._upload_to_gcs(gcs_bucket, release_date_path, self.release_date or "2020")
-        self._upload_to_gcs(gcs_bucket, video_duration_path, formatted_duration)
+        self._upload_to_gcs(gcs_bucket, video_duration_path, self.video_duration or "00:00:00")
 
 
     def _upload_to_gcs(self, bucket, path, content):
@@ -98,21 +101,6 @@ class Video(models.Model):
         print(f"Uploading to GCS path: {path} with content: {content}")
         blob.upload_from_string(content)
  
-        
-    def format_duration(self, duration):
-        try:
-            time_parts = duration.split(".")[0]
-            hours, minutes, seconds = time_parts.split(":")
-            hours = hours.zfill(2)
-            minutes = minutes.zfill(2)
-            seconds = seconds.zfill(2)
-            formatted_duration = f"{hours}:{minutes}:{seconds}"
-            print(f"formatted_duration: {formatted_duration}")
-            return formatted_duration
-        except Exception as e:
-            logger.error(f"Fehler bei der Formatierung der Dauer: {e}")
-            return "00:00:00"
-
 
     def __str__(self):
         return self.title

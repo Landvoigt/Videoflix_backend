@@ -186,6 +186,12 @@ CONTACT_EMAIL_1 = env("CONTACT_EMAIL_1")
 CONTACT_EMAIL_2 = env("CONTACT_EMAIL_2")
 
 
+# Windows rqworker:
+# python manage.py rqworker --worker-class videoflix.simpleworker.SimpleWorker default
+
+# Mac rqworker:
+# export DJANGO_SETTINGS_MODULE=videoflix.settings
+# OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES python manage.py rqworker
 RQ_QUEUES = {
     "default": {
         "HOST": "localhost",
@@ -196,14 +202,6 @@ RQ_QUEUES = {
     },
 }
 
-# rq worker --url redis://:foobared@localhost:6379/0            # zum Straten
-# tasklist | findstr rq                                         # beenden
-# taskkill /PID <Prozess-ID> /F                                 # Prozess beenden
-# taskkill /PID 6128 /F                                         # Beispiel
-
-
-
-# settings.py
 
 # Redis Cache configuration
 CACHES = {
@@ -218,9 +216,10 @@ CACHES = {
 }
 
 
-
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 MEDIA_URL = "/media/"
+
 
 SITE_ID = 1
 

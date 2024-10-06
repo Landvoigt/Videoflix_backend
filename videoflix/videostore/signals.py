@@ -9,8 +9,7 @@ from google.cloud import storage
 import shutil
 import subprocess
 import json
-
-
+from django.db import transaction
 
 
 logger = logging.getLogger(__name__)
@@ -34,17 +33,21 @@ logger = logging.getLogger(__name__)
 @receiver(post_save, sender=Video)
 def video_post_save(sender, instance, created, **kwargs):
     if created:
-        queue = django_rq.get_queue('default', autocommit=True)
-        logger.info(f"Enqueuing video id {instance.id} for conversion")
-        print(f"Enqueuing video id {instance.id} for conversion")
-        video_name, _ = os.path.splitext(os.path.basename(instance.video_file.path))
-        video = Video.objects.get(id=instance.id)
-        get_video_duration(video)
-        from .tasks import convert_to_hls
-        queue.enqueue(convert_to_hls, instance.id, video_name=video_name)
-        print(f"Video enqueued for HLS conversion: ID {instance.id}, Name {video_name}")
-        logger.debug(f"Video enqueued for HLS conversion: ID {instance.id}, Name {video_name}")
-        
+        transaction.on_commit(lambda: enqueue_video_task(instance))
+
+
+def enqueue_video_task(instance):
+    queue = django_rq.get_queue('default', autocommit=True)
+    logger.info(f"Enqueuing video id {instance.id} for conversion")
+    print(f"Enqueuing video id {instance.id} for conversion")
+
+    video_name, _ = os.path.splitext(os.path.basename(instance.video_file.path))
+    get_video_duration(instance) 
+    instance.save() 
+
+    from .tasks import convert_to_hls
+    queue.enqueue(convert_to_hls, instance.id, video_name=video_name)
+    logger.debug(f"Video enqueued for HLS conversion: ID {instance.id}, Name {video_name}")
 
          
 @receiver(post_delete, sender=Video)
