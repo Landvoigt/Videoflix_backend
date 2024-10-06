@@ -37,13 +37,18 @@ def video_post_save(sender, instance, created, **kwargs):
 
 
 def enqueue_video_task(instance):
+    if not instance.video_file:
+        logger.error(f"No video file associated with instance {instance.id}")
+        return  
+
     queue = django_rq.get_queue('default', autocommit=True)
     logger.info(f"Enqueuing video id {instance.id} for conversion")
     print(f"Enqueuing video id {instance.id} for conversion")
 
     video_name, _ = os.path.splitext(os.path.basename(instance.video_file.path))
-    get_video_duration(instance) 
-    instance.save() 
+    
+    get_video_duration(instance)
+    instance.save()
 
     from .tasks import convert_to_hls
     queue.enqueue(convert_to_hls, instance.id, video_name=video_name)
