@@ -20,8 +20,8 @@ from django_redis.cache import RedisCache
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
-#environ.Env.read_env()
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+environ.Env.read_env()
+#environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 
 
@@ -40,6 +40,7 @@ BACKEND_URL = "http://localhost:8000"
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
+    '34.22.209.159'
 ]
 
 CORS_ALLOWED_ORIGINS = [
