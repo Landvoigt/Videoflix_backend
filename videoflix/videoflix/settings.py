@@ -41,11 +41,13 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     '34.22.209.159',
-    'videoflix-backend.barnabas-gonda.com'
+    'videoflix-backend.barnabas-gonda.com',
+    'videoflix.back-serv-api.com'
 ]
 
 #http://34.22.209.159/admin/
 #http://videoflix-backend.barnabas-gonda.com/admin
+#http://videoflix.back-serv-api.com/admin
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
