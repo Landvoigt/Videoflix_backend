@@ -40,8 +40,12 @@ BACKEND_URL = "http://localhost:8000"
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
-    '34.22.209.159'
+    '34.22.209.159',
+    'videoflix-backend.barnabas-gonda.com'
 ]
+
+#http://34.22.209.159/admin/
+#http://videoflix-backend.barnabas-gonda.com/admin
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
