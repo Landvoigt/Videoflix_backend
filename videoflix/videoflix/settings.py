@@ -41,13 +41,12 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     '34.22.209.159',
-    'videoflix-backend.barnabas-gonda.com',
     'videoflix.back-serv-api.com'
 ]
 
 #http://34.22.209.159/admin/
-#http://videoflix-backend.barnabas-gonda.com/admin
 #http://videoflix.back-serv-api.com/admin
+#https://videoflix.back-serv-api.com/admin/   Es läuft schon!
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
@@ -177,6 +176,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
