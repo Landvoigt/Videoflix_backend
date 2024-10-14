@@ -45,8 +45,6 @@ ALLOWED_HOSTS = [
     'videoflix.timvoigt.ch',
 ]
 
-#http://34.22.209.159/admin/
-#https://videoflix.back-serv-api.com/admin/   
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
@@ -186,7 +184,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'  # Email Backend for testing
 EMAIL_HOST = env("EMAIL_HOST")
 EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
@@ -242,11 +239,6 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
     os.path.join(BASE_DIR, 'service-account-file.json')
 )
 
-# GS_DEFAULT_ACL = 'publicRead'
-# STATICFILES_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-# DEFAULT_FILE_STORAGE = 'storages.backends.gcloud.GoogleCloudStorage'
-# CONVERTED_VIDEOS_PATH = 'videos/'
-
 # pg_dump:
 #     cd .git\hooks
 #     echo #!/bin/sh > post-merge
@@ -256,4 +248,3 @@ GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
 
 #     type post-merge
 
-    
