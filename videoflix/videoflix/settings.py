@@ -41,17 +41,19 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     '34.22.209.159',
-    'videoflix.back-serv-api.com'
+    'videoflix.back-serv-api.com',
+    'videoflix.timvoigt.ch',
 ]
 
 #http://34.22.209.159/admin/
-#http://videoflix.back-serv-api.com/admin
-#https://videoflix.back-serv-api.com/admin/   Es läuft schon!
+#https://videoflix.back-serv-api.com/admin/   
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
     "http://localhost:8000",
     "http://127.0.0.1:5500",
+    "https://videoflix.timvoigt.ch",
+    "https://videoflix.back-serv-api.com"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
