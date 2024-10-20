@@ -57,50 +57,59 @@ class Video(models.Model):
        
         if self.video_file:
             self.video_file.name = os.path.basename(self.video_file.name)
-            
-
+    
         super().save(*args, **kwargs)
 
         if self.video_file:
             self.upload_text_to_gcs()
 
 
-    
-    def upload_text_to_gcs(self):
-        gcs_client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
-        gcs_bucket = gcs_client.bucket(settings.GS_BUCKET_NAME)
+def upload_text_to_gcs(self):
+    gcs_client = create_gcs_client()
+    gcs_bucket = gcs_client.bucket(settings.GS_BUCKET_NAME)
+    gcs_base_path = get_gcs_base_path(self.video_file.name)
+    self.video_duration = self.get_video_duration_if_needed() 
 
-        video_name = os.path.splitext(os.path.basename(self.video_file.name))[0]
-        gcs_base_path = f"text/{video_name}/"
+    paths_and_contents = {
+        'hlsPlaylist.txt': self.hls_playlist or "",
+        'title.txt': self.title or "",
+        'description.txt': self.description or "",
+        'category.txt': self.category or "",
+        'age.txt': self.age or "0",
+        'resolution.txt': self.resolution or "HD",
+        'release_date.txt': self.release_date or "2020",
+        'video_duration.txt': self.video_duration or "00:00:00"
+    }
+    upload_files_to_gcs(gcs_bucket, gcs_base_path, paths_and_contents)
 
-        hls_playlist_url = os.path.join(gcs_base_path, 'hlsPlaylist.txt')
-        title_path = os.path.join(gcs_base_path, 'title.txt')
-        description_path = os.path.join(gcs_base_path, 'description.txt')
-        category_path = os.path.join(gcs_base_path, 'category.txt')
-        age_path = os.path.join(gcs_base_path, 'age.txt')
-        resolution_path = os.path.join(gcs_base_path, 'resolution.txt')
-        release_date_path = os.path.join(gcs_base_path, 'release_date.txt')
-        video_duration_path = os.path.join(gcs_base_path, 'video_duration.txt')
-        
+
+def create_gcs_client():  
+    return storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
+
+
+def get_gcs_base_path(video_file_name):
+    video_name = os.path.splitext(os.path.basename(video_file_name))[0]
+    return f"text/{video_name}/"
+
+
+def get_video_duration_if_needed(self):
+    if not self.video_duration:
         from .signals import get_video_duration
-        if not self.video_duration:
-           self.video_duration = get_video_duration(self) 
-                
-        self._upload_to_gcs(gcs_bucket, hls_playlist_url, self.hls_playlist or "")
-        self._upload_to_gcs(gcs_bucket, title_path, self.title or "")
-        self._upload_to_gcs(gcs_bucket, description_path, self.description or "")
-        self._upload_to_gcs(gcs_bucket, category_path, self.category or "")
-        self._upload_to_gcs(gcs_bucket, age_path, self.age or "0") 
-        self._upload_to_gcs(gcs_bucket, resolution_path, self.resolution or "HD")
-        self._upload_to_gcs(gcs_bucket, release_date_path, self.release_date or "2020")
-        self._upload_to_gcs(gcs_bucket, video_duration_path, self.video_duration or "00:00:00")
+        return get_video_duration(self)
+    return self.video_duration
 
 
-    def _upload_to_gcs(self, bucket, path, content):
-        blob = bucket.blob(path)
-        print(f"Uploading to GCS path: {path} with content: {content}")
-        blob.upload_from_string(content)
- 
+def upload_files_to_gcs(gcs_bucket, gcs_base_path, paths_and_contents):
+    for filename, content in paths_and_contents.items():
+        gcs_path = os.path.join(gcs_base_path, filename)
+        _upload_to_gcs(gcs_bucket, gcs_path, content)
 
-    def __str__(self):
+
+def _upload_to_gcs(gcs_bucket, gcs_path, content):
+    blob = gcs_bucket.blob(gcs_path)
+    print(f"Uploading to GCS path: {gcs_path} with content: {content}")
+    blob.upload_from_string(content)
+
+
+def __str__(self):
         return self.title

@@ -14,6 +14,7 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 gcs_client = storage.Client(credentials=settings.GS_CREDENTIALS, project=settings.GS_PROJECT_ID)
 gcs_bucket = gcs_client.bucket(settings.GS_BUCKET_NAME)
 
+
 @dataclass
 class VideoData:
     subfolder: str
@@ -26,6 +27,8 @@ class VideoData:
     resolution: str
     release_date: str
     video_duration: str
+
+
 
 @api_view(["GET"])
 def get_poster_and_text(request):
@@ -68,31 +71,30 @@ def get_gcs_video_text_data(poster_urls):
 
 
 def create_video_data_from_blob(blob, poster_urls):
+    
     subfolder = extract_subfolder_from_blob(blob)
+    hlsPlaylistUrl = extract_blob_data(f'text/{subfolder}/hlsPlaylist.txt')
+    title = extract_blob_data(f'text/{subfolder}/title.txt')
+    category = extract_blob_data(f'text/{subfolder}/category.txt')
+    age = extract_blob_data(f'text/{subfolder}/age.txt', default_value='0')
+    resolution = extract_blob_data(f'text/{subfolder}/resolution.txt', default_value='HD')
+    release_date = extract_blob_data(f'text/{subfolder}/release_date.txt', default_value='2020')
+    video_duration = extract_blob_data(f'text/{subfolder}/video_duration.txt', default_value='00:00:00')
+    poster_url = get_poster_url(subfolder, poster_urls)
+    
+    return create_video_data(blob, subfolder, title, category, hlsPlaylistUrl, age, resolution, release_date, video_duration, poster_url)
 
-    playlist_url_blob = gcs_bucket.get_blob(f'text/{subfolder}/hlsPlaylist.txt')
-    hlsPlaylistUrl = playlist_url_blob.download_as_text() if playlist_url_blob else ''
-    
-    title_blob = gcs_bucket.get_blob(f'text/{subfolder}/title.txt')
-    title = title_blob.download_as_text() if title_blob else ''
-    
-    category_blob = gcs_bucket.get_blob(f'text/{subfolder}/category.txt')
-    category = category_blob.download_as_text() if category_blob else ''
-    
-    age_blob = gcs_bucket.get_blob(f'text/{subfolder}/age.txt')
-    age = age_blob.download_as_text().strip() if age_blob else '0'
-    
-    resolution_blob = gcs_bucket.get_blob(f'text/{subfolder}/resolution.txt')
-    resolution = resolution_blob.download_as_text().strip() if resolution_blob else 'HD'
-    
-    release_date_blob = gcs_bucket.get_blob(f'text/{subfolder}/release_date.txt')
-    release_date = release_date_blob.download_as_text().strip() if release_date_blob else '2020'
-    
-    video_duration_blob = gcs_bucket.get_blob(f'text/{subfolder}/video_duration.txt')
-    video_duration = video_duration_blob.download_as_text().strip() if video_duration_blob else '00:00:00'
-    
-    poster_url = next((url for url in poster_urls if subfolder in url), None)
-    
+
+def extract_blob_data(blob_path, default_value=''):
+    blob = gcs_bucket.get_blob(blob_path)
+    return blob.download_as_text().strip() if blob else default_value
+
+
+def get_poster_url(subfolder, poster_urls):
+    return next((url for url in poster_urls if subfolder in url), None)
+
+
+def create_video_data(blob, subfolder, title, category, hlsPlaylistUrl, age, resolution, release_date, video_duration, poster_url):
     return VideoData(
         subfolder=subfolder,
         title=title,
@@ -128,24 +130,16 @@ def fetch_video_text_data_from_gcs(poster_urls):
 
 @require_http_methods(["GET"])
 def get_preview_video(request):
-    video_key = request.GET.get('video_key')
-    resolution = request.GET.get('resolution') 
-
+    video_key, resolution = get_video_params(request)
     if not video_key or not resolution:
         return JsonResponse({'error': 'Video key and resolution are required'}, status=400)
-
-    cache_key = f"{video_key}_{resolution}"
+    cache_key = f"{video_key}_{resolution}"  
     try:
-        cached_video_url = redis_client.get(cache_key)
+        cached_video_url = get_cached_video_url(cache_key)
         if cached_video_url:
-            video_url = cached_video_url.decode('utf-8')
-            print('Video URL from cache:', video_url)
-            return JsonResponse({'video_url': video_url})
-        
-        video_url = f'https://storage.googleapis.com/videoflix-storage/hls/{video_key}/{resolution}.m3u8'
-        print('Generated video URL:', video_url)
-        redis_client.setex(cache_key, 3600, video_url)
-
+            return JsonResponse({'video_url': cached_video_url})     
+        video_url = generate_video_url(video_key, resolution)
+        cache_video_url(cache_key, video_url)     
         return JsonResponse({'video_url': video_url})
     except redis.RedisError as e:
         print(f'Redis error: {str(e)}')
@@ -155,28 +149,45 @@ def get_preview_video(request):
         return JsonResponse({'error': 'Internal server error'}, status=500)
 
 
+def get_video_params(request):
+    video_key = request.GET.get('video_key')
+    resolution = request.GET.get('resolution')
+    return video_key, resolution
+
+
+def get_cached_video_url(cache_key):
+    cached_video_url = redis_client.get(cache_key)
+    if cached_video_url:
+        return cached_video_url.decode('utf-8')
+    return None
+
+
+def generate_video_url(video_key, resolution):
+    video_url = f'https://storage.googleapis.com/videoflix-storage/hls/{video_key}/{resolution}.m3u8'
+    print('Generated video URL:', video_url)
+    return video_url
+
+
+def cache_video_url(cache_key, video_url):
+    redis_client.setex(cache_key, 3600, video_url)
+
 
 @require_http_methods(["GET"])
 def get_full_video(request):
     video_key = request.GET.get('video_key')
     resolution = request.GET.get('resolution')
-
     if not video_key or not resolution:
         return HttpResponseBadRequest({'error': 'Video key and resolution are required'})
-
     cache_key = f"{video_key}_{resolution}"
     cached_video_url = redis_client.get(cache_key)
     if cached_video_url:
         print('Video URL from cache:', cached_video_url.decode('utf-8'))
         return JsonResponse({'video_url': cached_video_url.decode('utf-8')})
-
     video_url = f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/hls/{video_key}/{resolution}.m3u8'
-
     print('Generated video URL:', video_url)
     redis_client.setex(cache_key, 3600, video_url)
 
     return JsonResponse({'video_url': video_url})
-
 
 
 @csrf_exempt
@@ -184,22 +195,16 @@ def get_full_video(request):
 def create_gcs_myFilms(request):
     try:
         data = json.loads(request.body.decode('utf-8'))
-        file_name = data.get('file_name')
-        
+        file_name = data.get('file_name')      
         if not file_name:
-            return JsonResponse({'error': 'file_name is required'}, status=400)
-        
+            return JsonResponse({'error': 'file_name is required'}, status=400)       
         main_folder = 'myFilms/'
         sub_folder = f'{main_folder}{file_name}/'
-
         if not gcs_bucket.blob(sub_folder).exists():
             gcs_bucket.blob(sub_folder + 'placeholder.txt').upload_from_string('')
             print(f'Unterordner "{sub_folder}" erstellt')
-
         folder_url = f'https://storage.googleapis.com/{settings.GS_BUCKET_NAME}/{sub_folder}'
-
         return JsonResponse({'message': f'Ordner "{sub_folder}" erfolgreich erstellt', 'url': folder_url}, status=201)
-
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -207,8 +212,7 @@ def create_gcs_myFilms(request):
 @api_view(["GET"])
 def get_myFilms(request):
     cache_key = 'my_films_subfolders'
-    subfolders = redis_client.get(cache_key)
-    
+    subfolders = redis_client.get(cache_key)   
     if subfolders:
         subfolders = json.loads(subfolders)
         print('Subfolders from cache:', subfolders)
@@ -223,13 +227,11 @@ def get_myFilms(request):
                     parts = blob.name.split('/')
                     if len(parts) > 1:
                         subfolder_name = parts[1]
-                        subfolder_names.add(subfolder_name)
-            
+                        subfolder_names.add(subfolder_name)           
             subfolders = list(subfolder_names)
             redis_client.setex(cache_key, 3600, json.dumps(subfolders))
         except Exception as e:
-            return Response({'error': f'Error fetching subfolder names: {str(e)}'}, status=500)
-    
+            return Response({'error': f'Error fetching subfolder names: {str(e)}'}, status=500)   
     return Response(subfolders)
 
 

@@ -39,6 +39,7 @@ BACKEND_URL = "http://localhost:8000"
 
 ALLOWED_HOSTS = [
     "localhost",
+    "localhost:4200",
     "127.0.0.1",
     '34.22.209.159',
     'videoflix.back-serv-api.com',
