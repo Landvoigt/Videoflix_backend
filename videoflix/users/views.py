@@ -100,6 +100,7 @@ def password_reset_token_created(sender, instance, reset_password_token, *args, 
     subject = 'Videoflix Password Reset'
     token = reset_password_token.key
     reset_password_link = f"http://localhost:4200/reset_password?token={token}"
+    #reset_password_link = f"https://barnabas-gonda.de/videoflix/reset_password?token={token}"
     message = (
         f"Hello {user.username}\n\n"
         f"You have requested to reset your password. Please click the following link to reset it:\n"
